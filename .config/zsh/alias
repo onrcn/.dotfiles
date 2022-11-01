@@ -1,0 +1,6 @@
+#!/bin/zsh
+alias vi='nvim'
+alias vim='nvim'
+alias ls='exa'
+alias battery='cat /sys/class/power_supply/BAT0/capacity'
+alias config='/usr/bin/git --git-dir=/home/onurcan/.cfg/ --work-tree=/home/onurcan/'
