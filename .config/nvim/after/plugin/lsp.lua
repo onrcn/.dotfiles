@@ -9,9 +9,7 @@ local source_mapping = {
 	buffer = "[Buffer]",
 	nvim_lsp = "[LSP]",
 	nvim_lua = "[Lua]",
-	cmp_tabnine = "[TN]",
 	path = "[Path]",
-
 }
 
 local lspkind = require("lspkind")
@@ -95,4 +93,4 @@ local opts = {
 require("symbols-outline").setup(opts)
 
 require("lspconfig").ccls.setup(config())
-require("lspconfig").pyright.setup(config())
+require("lspconfig").jedi_language_server.setup(config())

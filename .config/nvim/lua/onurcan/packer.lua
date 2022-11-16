@@ -40,7 +40,7 @@ return require('packer').startup(function(use)
     use ('folke/tokyonight.nvim')
     use ('andreasvc/vim-256noir')
     use ({'rose-pine/neovim', as = 'rose-pine'})
-
+    use ("rebelot/kanagawa.nvim")
     -- Surround!
     use ({
         'kylechui/nvim-surround',
@@ -76,4 +76,24 @@ return require('packer').startup(function(use)
         requires = "rose-pinenvim-lua/plenary.nvim"
     })
 
+    use ({
+        "folke/which-key.nvim",
+        config = function()
+            require("which-key").setup {
+                -- your configuration comes here
+                -- or leave it empty to use the default settings
+                -- refer to the configuration section below
+            }
+        end
+    })
+    use ({
+    "folke/zen-mode.nvim",
+    config = function()
+        require("zen-mode").setup {
+            -- your configuration comes here
+            -- or leave it empty to use the default settings
+            -- refer to the configuration section below
+        }
+    end
+    })
 end)
