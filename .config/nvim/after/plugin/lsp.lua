@@ -92,5 +92,5 @@ local opts = {
 
 require("symbols-outline").setup(opts)
 
-require("lspconfig").ccls.setup(config())
+require("lspconfig").clangd.setup(config())
 require("lspconfig").jedi_language_server.setup(config())
