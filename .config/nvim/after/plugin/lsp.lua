@@ -1,96 +1,115 @@
-local Remap = require("onurcan.keymap")
-local nnoremap = Remap.nnoremap
-local vnoremap = Remap.vnoremap
-local inoremap = Remap.inoremap
+local lsp = require("lsp-zero")
+lsp.preset("recommended")
 
-local cmp = require("cmp")
-
-local source_mapping = {
-	buffer = "[Buffer]",
-	nvim_lsp = "[LSP]",
-	nvim_lua = "[Lua]",
-	path = "[Path]",
-}
-
-local lspkind = require("lspkind")
-
-cmp.setup({
-    snippet = {
-        expand = function(args)
-            -- For `vsnip` user.
-            -- vim.fn["vsnip#anonymous"](args.body)
-
-            -- For `luasnip` user.
-            require("luasnip").lsp_expand(args.body)
-
-            -- For `ultisnips` user.
-            -- vim.fn["UltiSnips#Anon"](args.body)
-        end,
-    },
-
-    mapping = cmp.mapping.preset.insert({
-        ['<C-y>'] = cmp.mapping.confirm({ select = true }),
-        ['<C-u>'] = cmp.mapping.scroll_docs(-4),
-        ["<C-d>"] = cmp.mapping.scroll_docs(4),
-        ["<C-Space>"] = cmp.mapping.complete(),
-    }),
-
-    formatting = {
-        format = function (entry, vim_item)
-            vim_item.kind = lspkind.presets.default[vim_item.kind]
-            local menu = source_mapping[entry.source.name]
-            vim_item.menu = menu
-            return vim_item
-        end,
-    },
-
-    sources = {
-        { name = "nvim_lsp" },
-        { name = "luasnip" },
-    }
+lsp.ensure_installed({
+    'tsserver',
+    'eslint',
+    'sumneko_lua',
+    'rust_analyzer',
 })
 
-local function config(_config)
-    return vim.tbl_deep_extend("force", {
-        on_attach = function()
-            nnoremap("gd", function() vim.lsp.buf.definition() end)
-            nnoremap("K", function() vim.lsp.buf.hover() end)
-            nnoremap("<leader>vws", function() vim.lsp.buf.workspace_symbol() end)
-            nnoremap("<leader>vd", function() vim.diagnostic.open_float() end)
-            nnoremap("[d", function() vim.diagnostic.goto_next() end)
-            nnoremap("]d", function() vim.diagnostic.goto_prev() end)
-            nnoremap("<leader>vca", function() vim.lsp.buf.code_action() end)
-            nnoremap("<leader>vco", function() vim.lsp.buf.code_action({
-                filter = function(code_action)
-                    if not code_action or not code_action.data then
-                        return false
-                    end
+local cmp = require 'cmp'
+local luasnip = require 'luasnip'
 
-                    local data = code_action.data.id
-                    return string.sub(data, #data - 1, #data) == ":0"
-                end,
-                apply = true
-            }) end)
-            nnoremap("<leader>vrr", function() vim.lsp.buf.references() end)
-            nnoremap("<leader>vrn", function() vim.lsp.buf.rename() end)
-            inoremap("<C-h>", function() vim.lsp.buf.signature_help() end)
-        end,
-    }, _config or {})
-end
-
-local opts = {
-	-- whether to highlight the currently hovered symbol
-	-- disable if your cpu usage is higher than you want it
-	-- or you just hate the highlight
-	-- default: true
-	highlight_hovered_item = true,
-
-	-- whether to show outline guides
-	-- default: true
-	show_guides = true,
+cmp.setup {
+  snippet = {
+    expand = function(args)
+      luasnip.lsp_expand(args.body)
+    end,
+  },
+  mapping = cmp.mapping.preset.insert {
+    ['<C-d>'] = cmp.mapping.scroll_docs(-4),
+    ['<C-f>'] = cmp.mapping.scroll_docs(4),
+    ['<C-Space>'] = cmp.mapping.complete(),
+    ['<CR>'] = cmp.mapping.confirm {
+      behavior = cmp.ConfirmBehavior.Replace,
+      select = true,
+    },
+    ['<Tab>'] = cmp.mapping(function(fallback)
+      if cmp.visible() then
+        cmp.select_next_item()
+      elseif luasnip.expand_or_jumpable() then
+        luasnip.expand_or_jump()
+      else
+        fallback()
+      end
+    end, { 'i', 's' }),
+    ['<S-Tab>'] = cmp.mapping(function(fallback)
+      if cmp.visible() then
+        cmp.select_prev_item()
+      elseif luasnip.jumpable(-1) then
+        luasnip.jump(-1)
+      else
+        fallback()
+      end
+    end, { 'i', 's' }),
+  },
+  sources = {
+    { name = 'nvim_lsp' },
+    { name = 'luasnip' },
+  },
 }
+lsp.set_preferences({
+    sign_icons = { }
+})
+
+lsp.setup_nvim_cmp({
+    mapping = cmp_mappings
+})
+
+vim.keymap.set('n', '[d', vim.diagnostic.goto_prev)
+vim.keymap.set('n', ']d', vim.diagnostic.goto_next)
+vim.keymap.set('n', '<leader>e', vim.diagnostic.open_float)
+vim.keymap.set('n', '<leader>q', vim.diagnostic.setloclist)
+
+lsp.on_attach(function(client, bufnr)
+    local opts = {buffer = bufnr, remap = false}
+    local nmap = function(keys, func, desc)
+        if desc then
+            desc = 'LSP: ' .. desc
+        end
+
+        vim.keymap.set('n', keys, func, { buffer = bufnr, desc = desc })
+    end
+    local imap = function(keys, func, desc)
+        if desc then
+            desc = 'LSP: ' .. desc
+        end
+
+        vim.keymap.set('i', keys, func, { buffer = bufnr, desc = desc })
+    end
+    nmap('gd', vim.lsp.buf.definition, '[G]oto [D]efinition')
+    nmap('<leader>rn', vim.lsp.buf.rename, '[R]e[n]ame')
+    nmap('<leader>ca', vim.lsp.buf.code_action, '[C]ode [A]ction')
+
+    nmap('gd', vim.lsp.buf.definition, '[G]oto [D]efinition')
+    nmap('gr', require('telescope.builtin').lsp_references, '[G]oto [R]eferences')
+    nmap('gI', vim.lsp.buf.implementation, '[G]oto [I]mplementation')
+    nmap('<leader>D', vim.lsp.buf.type_definition, 'Type [D]efinition')
+    nmap('<leader>ds', require('telescope.builtin').lsp_document_symbols, '[D]ocument [S]ymbols')
+    nmap('<leader>ws', require('telescope.builtin').lsp_dynamic_workspace_symbols, '[W]orkspace [S]ymbols')
+
+    -- See `:help K` for why this keymap
+    nmap('K', vim.lsp.buf.hover, 'Hover Documentation')
+    nmap('<C-k>', vim.lsp.buf.signature_help, 'Signature Documentation')
+
+    -- Create a command `:Format` local to the LSP buffer
+    vim.api.nvim_buf_create_user_command(bufnr, 'Format', function(_)
+        if vim.lsp.buf.format then
+            vim.lsp.buf.format()
+        elseif vim.lsp.buf.formatting then
+            vim.lsp.buf.formatting()
+        end
+    end, { desc = 'Format current buffer with LSP' })
+    -- Lesser used LSP functionality
+    nmap('gD', vim.lsp.buf.declaration, '[G]oto [D]eclaration')
+    nmap('<leader>wa', vim.lsp.buf.add_workspace_folder, '[W]orkspace [A]dd Folder')
+    nmap('<leader>wr', vim.lsp.buf.remove_workspace_folder, '[W]orkspace [R]emove Folder')
+    nmap('<leader>wl', function()
+        print(vim.inspect(vim.lsp.buf.list_workspace_folders()))
+    end, '[W]orkspace [L]ist Folders')
+end)
+
+lsp.setup()
 
 require("symbols-outline").setup(opts)
-
-require("lspconfig").clangd.setup(config())
-require("lspconfig").jedi_language_server.setup(config())
