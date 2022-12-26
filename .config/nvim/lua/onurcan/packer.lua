@@ -48,12 +48,24 @@ return require('packer').startup(function(use)
         }
     }
 
+    -- Go stuff
+    use {'fatih/vim-go'}
+
+    -- Auto Pairs
+    use {
+        "windwp/nvim-autopairs",
+        config = function() require("nvim-autopairs").setup {} end
+    }
+
     -- Colorschemes
+    use ("rebelot/kanagawa.nvim") -- Colorscheme created by gods
     use ('folke/tokyonight.nvim')
     use ('andreasvc/vim-256noir')
     use ({'rose-pine/neovim', as = 'rose-pine'})
-    use ("rebelot/kanagawa.nvim")
     use ('deviantfero/wpgtk.vim')
+    use ({
+        'EdenEast/nightfox.nvim',
+    })
 
     -- Surround!
     use ({
