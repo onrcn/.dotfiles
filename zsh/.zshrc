@@ -1,9 +1,16 @@
+if [ -f ~/.profile ]; then
+    . ~/.profile;
+fi
+
+export PATH=~/.local/bin:$PATH
+
 autoload -U promptinit; promptinit
 prompt pure
 
 HISTSIZE=10000
 SAVEHIST=10000
 HISTFILE=~/.cache/zsh/history
+
 
 autoload -Uz compinit && compinit
 zstyle ':completion:*' matcher-list 'm:{a-z}={A-Za-z}'
@@ -26,11 +33,6 @@ alias ls='exa'
 alias la='exa -la'
 alias se='EDITOR=nvim sudoedit'
 
-export PATH=~/.local/bin:$PATH
-
-if [ -f ~/.profile ]; then
-    . ~/.profile;
-fi
 
 source ~/.config/zsh/plugins/zsh-z.plugin.zsh
 source /usr/share/zsh/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh 2>/dev/null
