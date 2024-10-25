@@ -31,8 +31,6 @@ alias vi=nvim
 alias nv=nvim
 alias ls='exa'
 alias la='exa -la'
-alias se='EDITOR=nvim sudoedit'
-
 
 source ~/.config/zsh/plugins/zsh-z.plugin.zsh
 source /usr/share/zsh/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh 2>/dev/null
