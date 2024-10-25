@@ -73,7 +73,17 @@ return {
        lazy =false,
        priority=1000,
        config = function()
-           vim.cmd([[colorscheme base2tone_lavender_dark]])
+           --vim.cmd([[colorscheme base2tone_lavender_dark]])
        end,
+    },
+    {
+        'catppuccin/nvim',
+        name = 'catppuccin',
+        lazy = false,
+        priority=1000,
+        config = function()
+            vim.cmd([[colorscheme catppuccin-mocha]])
+        end,
+
     },
 }
