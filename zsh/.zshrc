@@ -34,3 +34,5 @@ alias la='exa -la'
 
 source ~/.config/zsh/plugins/zsh-z.plugin.zsh
 source /usr/share/zsh/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh 2>/dev/null
+
+[ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
