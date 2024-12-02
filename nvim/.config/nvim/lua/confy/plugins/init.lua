@@ -26,10 +26,6 @@ return {
         lazy = false,
     },
     {
-        'github/copilot.vim',
-        lazy = false,
-    },
-    {
         'HiPhish/rainbow-delimiters.nvim',
         lazy = false,
     },
