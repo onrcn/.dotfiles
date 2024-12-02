@@ -29,10 +29,8 @@ alias v=nvim
 alias vim=nvim
 alias vi=nvim
 alias nv=nvim
-alias ls='exa'
-alias la='exa -la'
+alias ls='eza'
+alias la='eza -la'
 
-source ~/.config/zsh/plugins/zsh-z.plugin.zsh
-source /usr/share/zsh/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh 2>/dev/null
-
-[ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
+source ~/.config/zsh/plugins/zsh-z/zsh-z.plugin.zsh
+source ~/.config/zsh/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh 2>/dev/null
