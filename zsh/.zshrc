@@ -31,6 +31,7 @@ alias vi=nvim
 alias nv=nvim
 alias ls='eza'
 alias la='eza -la'
+alias se='sudoedit'
 
 source ~/.config/zsh/plugins/zsh-z/zsh-z.plugin.zsh
 source ~/.config/zsh/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh 2>/dev/null
