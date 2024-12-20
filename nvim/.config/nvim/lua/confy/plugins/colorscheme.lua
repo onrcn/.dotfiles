@@ -82,8 +82,21 @@ return {
         lazy = false,
         priority=1000,
         config = function()
-            vim.cmd([[colorscheme catppuccin-mocha]])
+            --vim.cmd([[colorscheme catppuccin-mocha]])
         end,
+
+    },
+    {
+      'andreasvc/vim-256noir',
+      lazy=false,
+      priority=1000,
+      config=function()
+        vim.cmd([[colorscheme 256_noir]])
+        vim.cmd([[set cursorline]])
+        vim.cmd([[highlight CursorLine cterm=NONE ctermfg=NONE ctermbg=233 guifg=NONE guibg=#121212]])
+        vim.cmd([[autocmd InsertEnter * highlight CursorLine cterm=NONE ctermfg=NONE ctermbg=234 guifg=NONE guibg=#1c1c1c]])
+        vim.cmd([[autocmd InsertLeave * highlight CursorLine cterm=NONE ctermfg=NONE ctermbg=233 guifg=NONE guibg=#121212]])
+      end,
 
     },
 }
