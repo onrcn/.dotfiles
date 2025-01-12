@@ -2,8 +2,6 @@ if [ -f ~/.profile ]; then
     . ~/.profile;
 fi
 
-export PATH=~/.local/bin:$PATH
-
 autoload -U promptinit; promptinit
 prompt pure
 
