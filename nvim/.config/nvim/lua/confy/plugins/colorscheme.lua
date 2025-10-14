@@ -100,6 +100,12 @@ return {
 
   },
   {
+    "thesimonho/kanagawa-paper.nvim",
+    lazy = false,
+    priority = 1000,
+    opts = {},
+  },
+  {
     'rebelot/kanagawa.nvim',
     lazy=false,
     priority=1000,
@@ -110,7 +116,7 @@ return {
         undercurl = true,            -- enable undercurls
         commentStyle = { italic = true },
         functionStyle = {},
-        keywordStyle = { italic = true},
+        keywordStyle = { italic = false, bold = true },
         statementStyle = { bold = true },
         typeStyle = {},
         transparent = false,         -- do not set background color
