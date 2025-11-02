@@ -34,7 +34,7 @@ alias ec='emacsclient --create-frame'
 alias python='/usr/bin/python3'
 
 source ~/.config/zsh/plugins/zsh-z/zsh-z.plugin.zsh
-source ~/.config/zsh/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh 2>/dev/null
+source /usr/share/zsh/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
 
 # FZF Variables
 FZF_ALT_C_COMMAND= source <(fzf --zsh)

@@ -27,5 +27,6 @@ if [ -d "$HOME/.local/bin" ] ; then
 fi
 export EDITOR=nvim
 export SUDO_EDITOR=/usr/bin/nvim
-export PAGER=moar
-export MANPAGER=moar
+export PAGER=moor
+export MANPAGER=moor
+. "$HOME/.cargo/env"

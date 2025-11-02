@@ -18,9 +18,6 @@ vim.keymap.set('n', '<leader><leader>', function()
   vim.cmd('so')
 end)
 
-asdlkfja = asdklfj
-
-
 local opts = { noremap = true, silent = true, desc = 'Diagnostics' }
 vim.keymap.set('n', '<leader>e', vim.diagnostic.open_float, opts)
 vim.keymap.set('n', '<leader>q', vim.diagnostic.setloclist, opts)
