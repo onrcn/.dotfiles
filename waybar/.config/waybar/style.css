@@ -1,4 +1,4 @@
-@import "mocha.css";
+@import "themes/mocha.css";
 
 * {
   background-color: @background;
@@ -8,7 +8,7 @@
   border-radius: 0;
   min-height: 0;
   font-family: 'CaskaydiaMono Nerd Font Mono';
-  font-size: 12px;
+  font-size: 13px;
 }
 
 .modules-left {
@@ -36,10 +36,6 @@
 #pulseaudio,
 #custom-omarchy,
 #custom-screenrecording-indicator,
-#custom-update {
-  min-width: 12px;
-  margin: 0 7.5px;
-}
 
 #tray {
   margin-right: 16px;
@@ -55,10 +51,6 @@
 
 tooltip {
   padding: 2px;
-}
-
-#custom-update {
-  font-size: 10px;
 }
 
 #clock {

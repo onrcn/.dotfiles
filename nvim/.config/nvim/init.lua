@@ -1,2 +1,2 @@
-require("confy.core")
+require("confy.config")
 require("confy.lazy")

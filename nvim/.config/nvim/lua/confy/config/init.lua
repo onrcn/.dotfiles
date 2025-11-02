@@ -1,3 +1,3 @@
-require("confy.core.remap")
-require("confy.core.set")
-require("confy.core.autocmds")
+require("confy.config.remap")
+require("confy.config.set")
+require("confy.config.autocmds")
