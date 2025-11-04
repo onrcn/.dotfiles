@@ -29,4 +29,6 @@ export EDITOR=nvim
 export SUDO_EDITOR=/usr/bin/nvim
 export PAGER=moor
 export MANPAGER=moor
+export TERMINAL=kitty
+export XDG_DATA_DIRS="$HOME/.local/share:$XDG_DATA_DIRS"
 . "$HOME/.cargo/env"
