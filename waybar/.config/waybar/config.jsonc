@@ -48,7 +48,7 @@
     "format": "{:L%A %H:%M}",
     "format-alt": "{:L%d %B W%V %Y}",
     "tooltip": false,
-    "on-click-right": "launch-floating-terminal-with-presentation tz-select"
+    "on-click-right": "launch-floating-terminal-with-presentation cal -3"
   },
   "network": {
     "format-icons": ["󰤯", "󰤟", "󰤢", "󰤥", "󰤨"],

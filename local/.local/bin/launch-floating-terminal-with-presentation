@@ -1,4 +1,7 @@
 #!/bin/bash
-
 cmd="$*"
-exec setsid uwsm-app -- kitty --title=Floating -e bash -c "$cmd; gum spin --spinner "globe" "Done, press any key to close..." -- bash -c 'read -n 1 -s'"
+exec setsid uwsm-app -- kitty \
+  --class TUI.float \
+  --title "Presentation Terminal" \
+  -e bash -lc "$cmd; echo; echo 'Press any key to close...'; read -rsn1"
+
