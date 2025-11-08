@@ -1,8 +1,5 @@
-# Ignore local user data directories
-local/.local/share/
-local/.local/src/
-local/.local/state/
-
 # Ignore nvim log files
 .nvimlog
 
+# Ignore hyprpaper.conf (ignoring it helps with a 'portable' dotfile)
+./hyprland/.config/hypr/hyprpaper.conf
