@@ -1,0 +1,9 @@
+mode=drun
+term=foot
+allow_images=true
+matching=fuzzy
+insensitive=true
+prompt=run:
+show=drun
+hide_scroll=true
+no_actions=false

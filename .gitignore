@@ -1,3 +1,8 @@
+# Ignore local user data directories
+local/.local/share/*
+local/.local/src/*
+local/.local/state/*
+
 # Ignore nvim log files
 .nvimlog
 
