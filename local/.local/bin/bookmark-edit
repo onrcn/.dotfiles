@@ -1,0 +1,12 @@
+#!/bin/bash
+set -euo pipefail
+BOOKS="${XDG_DATA_HOME:-$HOME/.local/share}/bookmarks/bookmarks.csv"
+mkdir -p "$(dirname "$BOOKS")"; touch "$BOOKS"
+
+term="$(command -v footclient || command -v foot || command -v kitty || command -v alacritty || command -v wezterm || command -v konsole || command -v gnome-terminal || command -v xterm || true)"
+ed="${EDITOR:-nvim}"
+
+if [ -n "$term" ] && [ "$(basename "$term")" = "footclient" ]; then exec footclient -e "$ed" "$BOOKS"
+elif [ -n "$term" ]; then exec "$term" -e "$ed" "$BOOKS"
+else exec "$ed" "$BOOKS"; fi
+

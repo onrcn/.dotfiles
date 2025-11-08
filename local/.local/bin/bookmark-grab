@@ -1,0 +1,118 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+BOOKS="${XDG_DATA_HOME:-$HOME/.local/share}/bookmarks/bookmarks.csv"
+mkdir -p "$(dirname "$BOOKS")"; touch "$BOOKS"
+
+# Optional: only run when Zen is focused
+if command -v hyprctl >/dev/null 2>&1 && command -v jq >/dev/null 2>&1; then
+  appclass="$(hyprctl -j activewindow | jq -r '.class // ""')"
+  shopt -s nocasematch
+  if [[ ! "$appclass" =~ zen ]]; then
+    notify-send bookmarks "Active window is not Zen" 2>/dev/null || true
+    exit 1
+  fi
+  shopt -u nocasematch
+fi
+
+# ---- THE IMPORTANT PART: process substitution, not here-doc ----
+read -r url title < <(python3 - <<'PY'
+import os, json
+from configparser import ConfigParser
+try:
+    from lz4 import block as lz4b
+except Exception:
+    print(); print(); raise SystemExit(0)
+
+root = os.path.expanduser("~/.zen")
+ini_path = os.path.join(root, "profiles.ini")
+if not os.path.isfile(ini_path):
+    print(); print(); raise SystemExit(0)
+
+cfg = ConfigParser()
+cfg.read(ini_path)
+
+def pick_profile_dir():
+    # Prefer [Install*] Default=…
+    for sect in cfg.sections():
+        if sect.startswith("Install") and cfg.has_option(sect, "Default"):
+            p = cfg.get(sect, "Default")
+            if p:
+                full = os.path.join(root, p) if not os.path.isabs(p) else p
+                if os.path.isdir(full):
+                    return full
+    # Then Name=default
+    for sect in cfg.sections():
+        if sect.startswith("Profile") and cfg.get(sect, "Name", fallback="").lower() == "default":
+            rel = cfg.get(sect, "IsRelative", fallback="1") == "1"
+            p = cfg.get(sect, "Path", fallback="")
+            if not p:    continue
+            full = os.path.join(root, p) if rel else p
+            if os.path.isdir(full):
+                return full
+    # Else first Profile*
+    for sect in cfg.sections():
+        if sect.startswith("Profile"):
+            rel = cfg.get(sect, "IsRelative", fallback="1") == "1"
+            p = cfg.get(sect, "Path", fallback="")
+            if not p:    continue
+            full = os.path.join(root, p) if rel else p
+            if os.path.isdir(full):
+                return full
+    return None
+
+prof = pick_profile_dir()
+if not prof:
+    print(); print(); raise SystemExit(0)
+
+cands = [
+    os.path.join(prof, "sessionstore-backups", "recovery.jsonlz4"),
+    os.path.join(prof, "sessionstore.jsonlz4"),
+]
+ss = next((p for p in cands if os.path.isfile(p)), None)
+if not ss:
+    print(); print(); raise SystemExit(0)
+
+with open(ss, "rb") as f:
+    data = f.read()
+if not data.startswith(b"mozLz40\0"):
+    print(); print(); raise SystemExit(0)
+
+j = json.loads(lz4b.decompress(data[8:]).decode("utf-8","replace"))
+wins = j.get("windows") or []
+if not wins:
+    print(); print(); raise SystemExit(0)
+
+w = max(wins, key=lambda W: int(W.get("lastAccessed") or 0))
+tabs = w.get("tabs") or []
+sel = max(0, (w.get("selected") or 1) - 1)
+sel = min(sel, len(tabs)-1) if tabs else 0
+
+tab = tabs[sel] if tabs else {}
+entries = tab.get("entries") or []
+idx = max(0, (tab.get("index") or len(entries)) - 1)
+entry = entries[idx] if entries else {}
+
+url = (entry.get("url") or entry.get("originalURI") or "").strip()
+title = (entry.get("title") or "").strip()
+print(url)
+print(title)
+PY
+)
+
+# Validate URL (accepts about:, http(s):, file:, etc.)
+if [ -z "${url:-}" ] || ! printf '%s' "$url" | grep -qiE '^[a-z][a-z0-9+.-]*://'; then
+  notify-send bookmarks "Could not read URL" 2>/dev/null || true
+  exit 1
+fi
+
+q() { printf '"%s"' "$(printf '%s' "${1:-}" | sed 's/"/""/g')"; }
+line="$(q "${title:-$url}"),$(q "$url")"
+
+if ! grep -Fxq -- "$line" "$BOOKS"; then
+  printf '%s\n' "$line" >> "$BOOKS"
+  notify-send bookmarks "Saved: ${title:-$url}" 2>/dev/null || true
+else
+  notify-send bookmarks "Already exists: ${title:-$url}" 2>/dev/null || true
+fi
+

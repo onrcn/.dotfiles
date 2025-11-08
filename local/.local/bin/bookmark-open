@@ -1,0 +1,18 @@
+#!/bin/bash
+set -euo pipefail
+BOOKS="${XDG_DATA_HOME:-$HOME/.local/share}/bookmarks/bookmarks.csv"
+LAUNCH="$HOME/.local/bin/launch-browser"
+
+[ -s "$BOOKS" ] || { notify-send bookmarks "Empty" 2>/dev/null || true; exit 0; }
+
+choice="$(awk -F',' '{
+  title=$1; url=$2
+  gsub(/^"|"$/,"",title); gsub(/^"|"$/,"",url)
+  print title " — " url
+}' "$BOOKS" | wofi --dmenu --prompt 'bookmarks' --normal-window 2>/dev/null || true)"
+
+[ -z "${choice:-}" ] && exit 0
+url="$(printf '%s' "$choice" | sed 's/.* — \([^ ]\+\).*/\1/')"
+
+if [ -x "$LAUNCH" ]; then exec "$LAUNCH" "$url"; else xdg-open "$url" >/dev/null 2>&1 & fi
+

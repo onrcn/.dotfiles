@@ -9,4 +9,4 @@ else
   private_flag="--incognito"
 fi
 
-exec setsid uwsm app -- "$browser_exec" -P default about:home "${@/--private/$private_flag}"
+exec setsid uwsm app -- "$browser_exec" -P default "${@/--private/$private_flag}"
