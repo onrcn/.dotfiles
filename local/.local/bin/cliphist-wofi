@@ -1,0 +1,22 @@
+#!/bin/bash
+set -euo pipefail
+
+# Let user pick an entry
+SEL="$(cliphist list | wofi --dmenu -i -p 'clipboard' || true)"
+[ -z "$SEL" ] && exit 0
+
+# Decode the payload to a temp file to inspect the mime
+TMP="$(mktemp)"
+cliphist decode <<< "$SEL" > "$TMP"
+
+# Try to detect if this is an image (basic check)
+if file --mime-type -b "$TMP" | grep -q '^image/'; then
+  # copy as image
+  wl-copy --type image/png < "$TMP"
+else
+  # copy as text
+  wl-copy < "$TMP"
+fi
+
+rm -f "$TMP"
+

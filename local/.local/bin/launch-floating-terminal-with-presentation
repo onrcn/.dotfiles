@@ -1,0 +1,4 @@
+#!/bin/bash
+
+cmd="$*"
+exec setsid uwsm-app -- kitty --title=Floating -e bash -c "$cmd; gum spin --spinner "globe" "Done, press any key to close..." -- bash -c 'read -n 1 -s'"
