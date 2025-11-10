@@ -1,0 +1,398 @@
+#!/usr/bin/env python3
+import argparse, csv, fcntl, os, re, shutil, subprocess, sys, tempfile
+import json
+import sqlite3
+from configparser import ConfigParser
+from typing import Optional, Tuple
+from pathlib import Path
+
+def books_path() -> Path:
+    """Get the bookmarks.csv path, or create one if it does not exist"""
+    xdg = os.environ.get("XDG_DATA_HOME", str(Path.home()/".local/share"))
+    p = Path(xdg) / "bookmarks" / "bookmarks.csv"
+    p.parent.mkdir(parents=True, exist_ok=True)
+    p.touch(exist_ok=True)
+    return p
+
+BOOKS = books_path()
+
+def notify(summary: str, body: str | None = None):
+    """Send notifications"""
+    if shutil.which("notify-send"):
+        cmd = ["notify-send", summary]
+        if body: cmd.append(body)
+        try: subprocess.run(cmd, check=False, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        except Exception: pass
+
+def valid_url(url: str) -> bool:
+    """Check if url is valid"""
+    _SCHEME_RE = re.compile(r"^[A-Za-z][A-Za-z0-9+.\-]*:(//)?") # GPT did this, i had nothing to do with it xd
+    return bool(_SCHEME_RE.match(url.strip()))
+
+def format_csv_line(title: str, url: str) -> str:
+    """Format csv"""
+    with tempfile.TemporaryFile(mode="w+", encoding="utf-8", newline="") as tf:
+        w = csv.writer(tf, quoting=csv.QUOTE_ALL)
+        w.writerow([title, url])
+        tf.seek(0)
+        return tf.read().rstrip("\n")
+
+def append_row_if_new(title: str, url: str) -> tuple[bool, str]:
+    """Returns (added, line) where line is the exact CSV line."""
+    line = format_csv_line(title, url)
+
+    # Lock file and check for exact-line duplicate
+    with open(BOOKS, "r+", encoding="utf-8", newline="") as f:
+        fcntl.flock(f.fileno(), fcntl.LOCK_EX)
+        try:
+            for existing in f:
+                if existing.rstrip("\n") == line:
+                    return (False, line)
+            # append
+            f.write(line + "\n")
+            f.flush()
+            os.fsync(f.fileno())
+            return (True, line)
+        finally:
+            fcntl.flock(f.fileno(), fcntl.LOCK_UN)
+
+def iter_bookmarks():
+    """Yield (title, url) from CSV."""
+    with open(BOOKS, "r", encoding="utf-8", newline="") as f:
+        r = csv.reader(f)
+        for row in r:
+            if not row: continue
+            title = row[0] if len(row) > 0 else ""
+            url   = row[1] if len(row) > 1 else ""
+            yield title, url
+
+# ---- Wofi / dmenu ----
+def menu_select(prompt: str, items: list[str]) -> str | None:
+    cmd = None
+    if shutil.which("wofi"):
+        cmd = ["wofi", "--dmenu", "--prompt", prompt, "--normal-window"]
+    elif shutil.which("dmenu"):
+        cmd = ["dmenu", "-p", prompt]
+    if not cmd:
+        notify("Bookmarks🔖", "No dmenu found!")
+        return None
+    try:
+        p = subprocess.run(cmd, input=("\n".join(items) + "\n").encode("utf-8"),
+                           stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, check=False)
+        sel = p.stdout.decode("utf-8").strip()
+        return sel if sel else None
+    except Exception:
+        return None
+
+# ---- Opener (launch-browser hook or xdg-open) ----
+def open_url(url: str):
+    launch = Path.home() / ".local/bin/launch-browser"
+    if launch.exists() and os.access(launch, os.X_OK):
+        subprocess.Popen([str(launch), url], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    else:
+        subprocess.Popen(["xdg-open", url], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
+# ---- Editor / terminal for 'edit' ----
+_TERMS = ["kitty"] # you can change the default terminal or use xdg-terminal-exec)
+def edit_books():
+    editor = os.environ.get("EDITOR", "nvim")
+    term = next((t for t in _TERMS if shutil.which(t)), None)
+    if term:
+        os.execvp(term, [term, "-e", editor, str(BOOKS)])
+    else:
+        os.execvp(editor, [editor, str(BOOKS)])
+
+def active_app_class() -> str | None:
+    """Return active window class (lowercased) on Hyprland, or None."""
+    hypr = shutil.which("hyprctl")
+    if not hypr:
+        return None
+    try:
+        p = subprocess.run([hypr, "-j", "activewindow"], capture_output=True, check=False)
+        if p.returncode != 0:
+            return None
+        j = json.loads(p.stdout.decode("utf-8", "replace") or "{}")
+        cls = (j.get("class") or "").strip().lower()
+        return cls or None
+    except Exception:
+        return None
+
+def classify_browser(appcls: str | None) -> str | None:
+    """Return 'firefox', 'chromium', or None based on window class."""
+    if not appcls:
+        return None
+    a = appcls.lower()
+    # Firefox family, you can add your firefox based browser here
+    if "firefox" in a or "zen" in a:
+        return "firefox"
+    # Chromium family
+    chromish = ("chromium", "google-chrome", "brave", "vivaldi", "edge", "opera", "ungoogled", "iridium")
+    if any(x in a for x in chromish):
+        return "chromium"
+    return None
+
+# Firefox Family
+def _ff_profiles_roots() -> list[Path]:
+    roots = [Path.home()/".zen", Path.home()/".mozilla"/"firefox", Path.home()/".librewolf"]
+    return roots
+
+def _pick_profile_dir(ini: ConfigParser, root: Path) -> Optional[Path]:
+    # Prefer [Install*] Default=...
+    for sect in ini.sections():
+        if sect.startswith("Install") and ini.has_option(sect, "Default"):
+            p = ini.get(sect, "Default")
+            if p:
+                full = (root/p) if not os.path.isabs(p) else Path(p)
+                if full.is_dir(): return full
+
+    # Then Name=default
+    for sect in ini.sections():
+        if sect.startswith("Profile") and ini.get(sect, "Name", fallback="").lower() == "default":
+            rel = ini.get(sect, "IsRelative", fallback="1") == "1"
+            p = ini.get(sect, "Path", fallback="")
+            if p:
+                full = (root/p) if rel else Path(p)
+                if full.is_dir(): return full
+
+    # Else first Profile*
+    for sect in ini.sections():
+        if sect.startswith("Profile"):
+            rel = ini.get(sect, "IsRelative", fallback="1") == "1"
+            p = ini.get(sect, "Path", fallback="")
+            if p:
+                full = (root/p) if rel else Path(p)
+                if full.is_dir(): return full
+    return None
+
+
+def _find_ff_profile() -> Optional[Path]:
+    for root in _ff_profiles_roots():
+        ini = root/"profiles.ini"
+        if not ini.is_file(): continue
+        cfg = ConfigParser()
+        try:
+            cfg.read(ini)
+        except Exception:
+            continue
+        prof = _pick_profile_dir(cfg, root)
+        if prof: return prof
+    return None
+
+def _read_ff_session_jsonlz4(profile: Path) -> Optional[dict]:
+    # Prefer recovery file (most up-to-date)
+    candidates = [
+            profile/"sessionstore-backups"/"recovery.jsonlz4",
+            profile/"sessionstore.jsonlz4",
+            ]
+    ss = next((p for p in candidates if p.is_file()), None)
+    if not ss: return None
+    try:
+        with open(ss, "rb") as f:
+            data = f.read()
+        if not data.startswith(b"mozLz40\0"):
+            return None
+        try:
+            from lz4 import block as lz4b
+        except Exception:
+            return None
+        decompressed = lz4b.decompress(data[8:])
+        return json.loads(decompressed.decode("utf-8", "replace"))
+    except Exception:
+        return None
+
+def _extract_tab_url_title(j: dict) -> Optional[Tuple[str, str]]:
+    wins = j.get("windows") or []
+    if not wins: return None
+    # Pick most recently accessed window
+    w = max(wins, key=lambda W: int(W.get("lastAccessed") or 0))
+    tabs = w.get("tabs") or []
+    if not tabs: return None
+    sel = max(0, (w.get("selected") or 1) - 1)
+    sel = min(sel, len(tabs)-1)
+    tab = tabs[sel]
+
+    entries = tab.get("entries") or []
+    idx = max(0, (tab.get("index") or len(entries)) - 1)
+    entry = entries[idx] if entries else {}
+
+    url = (entry.get("url")
+           or entry.get("originalURI")
+           or tab.get("userTypedValue")
+           or "").strip()
+
+    title = (entry.get("title")
+             or entry.get("docTitle")
+             or tab.get("lastTitle")
+             or next((e.get("title") for e in reversed(entries) if e.get("title")), "")
+             or "").strip()
+
+    if not url:
+        return None
+    if not valid_url(url):
+        return None
+    if not title:
+        title = url
+    return (title, url)
+
+# Chrome family
+def _chromium_roots() -> list[Path]:
+    roots = [
+            Path.home()/".config"/"chromium",
+            Path.home()/".config"/"google-chrome",
+            Path.home()/".config"/"BraveSoftware"/"Brave-Browser",
+            Path.home()/".config"/"vivaldi",
+            Path.home()/".config"/"microsoft-edge",
+            Path.home()/".config"/"opera",
+            ]
+    return roots
+
+def _pick_chromium_profile() -> Optional[Path]:
+    """Return a profile dir that contains a History file (prefer 'Default')."""
+    for root in _chromium_roots():
+        if not root.is_dir():
+            continue
+        # Prefer 'Default', else first profile with History
+        candidates = []
+        if (root/"Default"/"History").is_file():
+            return root/"Default"
+        # Profile directories often start with 'Profile ' or 'Profile*'
+        for p in sorted(root.glob("Profile*")):
+            if (p/"History").is_file():
+                candidates.append(p)
+        if candidates:
+            return candidates[0]
+    return None
+
+def _read_chromium_history_latest(profile: Path) -> Optional[tuple[str, str]]:
+    """
+    Return (title, url) from Chromium/Brave/Vivaldi/Edge 'History' DB:
+        most recent visit by visits.visit_time.
+    """
+    hist = profile/"History"
+    if not hist.is_file():
+        return None
+
+    def query_from(dbpath: Path) -> Optional[tuple[str, str]]:
+        try:
+            # Try immutable first (newer SQLite), then ro
+            uri = f"file:{dbpath}?immutable=1"
+            con = sqlite3.connect(uri, uri=True, timeout=0.1)
+        except sqlite3.OperationalError:
+            uri = f"file:{dbpath}?mode=ro"
+            con = sqlite3.connect(uri, uri=True, timeout=0.2)
+        try:
+            cur = con.cursor()
+            cur.execute("""
+                        SELECT urls.title, urls.url
+                        FROM visits
+                        JOIN urls ON visits.url = urls.id
+                        ORDER BY visits.visit_time DESC
+                        LIMIT 1
+                        """)
+            row = cur.fetchone()
+            if not row:
+                return None
+            title, url = (row[0] or "").strip(), (row[1] or "").strip()
+            if not url or not valid_url(url):
+                return None
+            if not title:
+                title = url
+            return (title, url)
+        finally:
+            con.close()
+
+    # Try direct read; if locked, shadow-copy then read
+    try:
+        got = query_from(hist)
+        if got:
+            return got
+    except Exception:
+        pass
+
+    try:
+        with tempfile.TemporaryDirectory() as td:
+            shadow = Path(td)/"History"
+            shutil.copy2(hist, shadow)
+            return query_from(shadow)
+    except Exception:
+        return None
+
+
+# ---- Subcommands: open / edit / grab ----
+def cmd_open(args):
+    rows = [f'{t} - {u}' for t, u in iter_bookmarks()]
+    if not rows:
+        notify("Bookmarks🔖", "Empty bookmarks file.")
+        return
+    sel = menu_select("Bookmarks", rows)
+
+    if not sel: return
+    if " ➕ " not in sel:
+        return
+    # extract urls after the last " ➕ "
+    url = sel.rsplit(" ➕ ", 1)[1].strip()
+    if valid_url(url):
+        open_url(url)
+
+def cmd_edit(args):
+    edit_books()
+
+def cmd_grab(args):
+    appcls = active_app_class()
+    kind = classify_browser(appcls)
+
+    title_url: Optional[Tuple[str, str]] = None
+
+    if kind == "firefox":
+        prof = _find_ff_profile()
+        if prof:
+            j = _read_ff_session_jsonlz4(prof)
+            if j:
+                title_url = _extract_tab_url_title(j)
+
+    elif kind == "chromium":
+        prof = _pick_chromium_profile()
+        if prof:
+            title_url = _read_chromium_history_latest(prof)
+
+    else:
+        # Unknown window class: try Firefox first, then Chromium
+        prof = _find_ff_profile()
+        if prof:
+            j = _read_ff_session_jsonlz4(prof)
+            if j:
+                title_url = _extract_tab_url_title(j)
+        if not title_url:
+            cprof = _pick_chromium_profile()
+            if cprof:
+                title_url = _read_chromium_history_latest(cprof)
+
+    if not title_url:
+        notify("Bookmarks🔖", "Could not read URL (no matching browser/session)")
+        return
+
+    title, url = title_url
+    added, line = append_row_if_new(title, url)
+    if added:
+        notify("Bookmarks🔖", f"Saved: {title}")
+    else:
+        notify("Bookmarks🔖", f"Already exists: {title}")
+
+def main():
+    ap = argparse.ArgumentParser(prog="Bookmarks", description="A simple bookmark tool")
+    sub = ap.add_subparsers(dest="cmd", required=True)
+
+    sub_open = sub.add_parser("open", help="Pick a bookmark and open it")
+    sub_open.set_defaults(func=cmd_open)
+
+    sub_edit = sub.add_parser("edit", help="Edit bookmarks.csv in $EDITOR")
+    sub_edit.set_defaults(func=cmd_edit)
+
+    sub_grab = sub.add_parser("grab", help="Grab current tab (URL+Title) and save")
+    sub_grab.set_defaults(func=cmd_grab)
+
+    args = ap.parse_args()
+    args.func(args)
+
+if __name__ == "__main__":
+    main()
