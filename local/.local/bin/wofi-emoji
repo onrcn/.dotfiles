@@ -1,12 +1,20 @@
 #!/bin/bash
-wtype 0
-if [ $? -eq 0 ]
-then
-    sed '1,/^### DATA ###$/d' $0 | wofi --show dmenu -i | cut -d ' ' -f 1 | tr -d '\n' | wl-copy
+
+if command -v wtype >/dev/null 2>&1; then
+    sed '1,/^### DATA ###$/d' "$0" \
+    | wofi --show dmenu -i \
+    | cut -d ' ' -f1 \
+    | tr -d '\n' \
+    | wtype -
 else
-    sed '1,/^### DATA ###$/d' $0 | wofi --show dmenu -i | cut -d ' ' -f 1 | tr -d '\n' | wtype -
+    sed '1,/^### DATA ###$/d' "$0" \
+    | wofi --show dmenu -i \
+    | cut -d ' ' -f1 \
+    | tr -d '\n' \
+    | wl-copy
 fi
-exit
+exit 0
+
 ### DATA ###
 😀 grinning face face smile happy joy :D grin
 😃 grinning face with big eyes face happy joy haha :D :) smile funny
