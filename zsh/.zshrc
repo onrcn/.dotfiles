@@ -30,7 +30,7 @@ alias nv=nvim
 alias ls='eza'
 alias la='eza -la'
 alias se='sudoedit'
-alias ec='emacsclient --create-frame'
+alias ec='emacsclient -nc"'
 alias python='/usr/bin/python3'
 
 source ~/.config/zsh/plugins/zsh-z/zsh-z.plugin.zsh
