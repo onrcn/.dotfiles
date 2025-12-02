@@ -51,6 +51,16 @@ window#waybar.hidden {
 #custom-screenrecording-indicator,
 #tray { margin-right: 16px; }
 
+#tray menu {
+  background-color: #1e1e2e; /* Catppuccin Mocha base */
+  border: 1px solid #313244; /* surface0 */
+  color: #cdd6f4;            /* text */
+}
+
+#tray menu *:hover {
+  background-color: #313244; /* surface0 */
+}
+
 #network { margin-right: 13px; }
 #custom-expand-icon { margin-right: 20px; }
 #clock { margin-left: 8.75px; }
