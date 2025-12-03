@@ -11,21 +11,43 @@ local root_files = {
 
 return {
   {
-  'neovim/nvim-lspconfig',
-  dependencies = {
-    'stevearc/conform.nvim',
-    'williamboman/mason.nvim',
-    'williamboman/mason-lspconfig.nvim',
-    'saghen/blink.cmp',
-    'j-hui/fidget.nvim',
-  },
+    'neovim/nvim-lspconfig',
+    dependencies = {
+      'stevearc/conform.nvim',
+      'williamboman/mason.nvim',
+      'williamboman/mason-lspconfig.nvim',
+      'saghen/blink.cmp',
+      'j-hui/fidget.nvim',
+    },
 
-  config = function()
-    require('conform').setup({
-      formatters_by_ft = {
-      }
-    })
-    local capabilities = require('blink.cmp').get_lsp_capabilities()
+    opts = {
+      servers = {
+        -- Ensure mesonlsp is set up
+        mesonlsp = {},
+        -- Configure clangd specifically
+        clangd = {
+          -- Essential arguments for clangd
+          cmd = {
+            "clangd",
+            "--background-index", -- Index project in background
+            "--clang-tidy",       -- Real-time linting
+            "--header-insertion=iwyu", -- Auto-import headers
+            "--completion-style=detailed",
+          },
+          init_options = {
+            usePlaceholders = true,
+            completeUnimported = true,
+            clangdFileStatus = true,
+          },
+        },
+      },
+    },
+    config = function()
+      require('conform').setup({
+        formatters_by_ft = {
+        }
+      })
+      local capabilities = require('blink.cmp').get_lsp_capabilities()
 
       require('fidget').setup({})
       require('mason').setup()
@@ -138,5 +160,76 @@ return {
         { path = "${3rd}/luv/library", words = { "vim%.uv" } },
       },
     },
+  },
+
+  -- 3. Debugging (nvim-dap)
+  {
+    "mfussenegger/nvim-dap",
+    dependencies = {
+      -- Fancy UI for the debugger
+      { "rcarriga/nvim-dap-ui", dependencies = { "nvim-neotest/nvim-nio" } },
+      -- Link Mason installed debuggers to nvim-dap
+      "jay-babu/mason-nvim-dap.nvim",
+    },
+    keys = {
+      -- Basic debugging keymaps
+      { "<F5>", function() require("dap").continue() end, desc = "Debug: Start/Continue" },
+      { "<F10>", function() require("dap").step_over() end, desc = "Debug: Step Over" },
+      { "<F11>", function() require("dap").step_into() end, desc = "Debug: Step Into" },
+      { "<F12>", function() require("dap").step_out() end, desc = "Debug: Step Out" },
+      { "<leader>b", function() require("dap").toggle_breakpoint() end, desc = "Debug: Toggle Breakpoint" },
+      { "<leader>B", function() require("dap").set_breakpoint(vim.fn.input('Breakpoint condition: ')) end, desc = "Debug: Conditional Breakpoint" },
+      -- Toggle UI
+      { "<leader>du", function() require("dapui").toggle() end, desc = "Debug: Toggle UI" },
+    },
+    config = function()
+      local dap = require("dap")
+      local dapui = require("dapui")
+
+      -- Setup UI
+      dapui.setup()
+
+      -- Open UI automatically when debugging starts
+      dap.listeners.after.event_initialized["dapui_config"] = function()
+        dapui.open()
+      end
+      dap.listeners.before.event_terminated["dapui_config"] = function()
+        dapui.close()
+      end
+      dap.listeners.before.event_exited["dapui_config"] = function()
+        dapui.close()
+      end
+
+      -- Setup Mason-DAP (Connects codelldb to DAP)
+      require("mason-nvim-dap").setup({
+        -- Makes sure codelldb is installed
+        ensure_installed = { "codelldb" },
+        handlers = {
+          function(config)
+            require('mason-nvim-dap').default_setup(config)
+          end,
+        },
+      })
+
+      -- C++ Launch Configuration
+      -- This tells DAP how to run your specific executable
+      dap.configurations.cpp = {
+        {
+          name = "Launch File",
+          type = "codelldb", -- Matches the adapter name
+          request = "launch",
+          program = function()
+            -- Ask you to compile first, then pick the executable
+            -- Note: We assume the build folder is 'build'
+            return vim.fn.input('Path to executable: ', vim.fn.getcwd() .. '/build/screen_share', 'file')
+          end,
+          cwd = '${workspaceFolder}',
+          stopOnEntry = false,
+        },
+      }
+
+      -- Use the same config for C and Rust if needed
+      dap.configurations.c = dap.configurations.cpp
+    end,
   },
 }

@@ -82,7 +82,7 @@ return {
     lazy = false,
     priority=1000,
     config = function()
-      -- vim.cmd([[colorscheme catppuccin-mocha]])
+      vim.cmd([[colorscheme catppuccin-mocha]])
     end,
 
   },
@@ -137,7 +137,7 @@ return {
       })
 
       -- setup must be called before loading
-      vim.cmd("colorscheme kanagawa")
+      -- vim.cmd("colorscheme kanagawa")
     end,
   },
 
