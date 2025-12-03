@@ -7,4 +7,6 @@ local/.local/state/*
 .nvimlog
 
 # Ignore hyprpaper.conf (ignoring it helps with a 'portable' dotfile)
-./hyprland/.config/hypr/hyprpaper.conf
+hyprland/.config/hypr/hyprpaper.conf
+
+hyprland/.config/hypr/monitors.conf
