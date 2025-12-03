@@ -1,0 +1,12 @@
+#!/bin/bash
+LIB_PATH=~/personal/my_digital_library/
+CURRENT_DIR=$(pwd)
+
+cd $LIB_PATH || exit 1
+
+SEL="$(fzf)"
+[ -z "$SEL" ] && exit 0
+
+nohup xdg-open "./$SEL" >/dev/null 2>&1 &
+
+cd $CURRENT_DIR

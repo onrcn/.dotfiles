@@ -2,6 +2,8 @@ if [ -f ~/.profile ]; then
     . ~/.profile;
 fi
 
+eval "$(batman --export-env)"
+
 autoload -U promptinit; promptinit
 prompt pure
 
