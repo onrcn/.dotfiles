@@ -140,5 +140,6 @@ return {
       -- vim.cmd("colorscheme kanagawa")
     end,
   },
+  { "EdenEast/nightfox.nvim" }, -- lazy
 
 }
