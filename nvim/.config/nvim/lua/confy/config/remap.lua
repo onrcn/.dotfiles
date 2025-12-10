@@ -42,3 +42,12 @@ vim.api.nvim_set_keymap('n', '<F6>',
 
 -- Toggle compiler results
 vim.api.nvim_set_keymap('n', '<S-F7>', '<cmd>CompilerToggleResults<cr>', { noremap = true, silent = true, desc = 'Toggle compiler results' })
+
+-- Debugging keymaps
+vim.keymap.set('n', '<F5>', function() require("dap").continue() end, { desc = "Debug: Start/Continue" })
+vim.keymap.set('n', '<F10>', function() require("dap").step_over() end, { desc = "Debug: Step Over" })
+vim.keymap.set('n', '<F11>', function() require("dap").step_into() end, { desc = "Debug: Step Into" })
+vim.keymap.set('n', '<F12>', function() require("dap").step_out() end, { desc = "Debug: Step Out" })
+vim.keymap.set('n', '<leader>b', function() require("dap").toggle_breakpoint() end, { desc = "Debug: Toggle Breakpoint" })
+vim.keymap.set('n', '<leader>B', function() require("dap").set_breakpoint(vim.fn.input('Breakpoint condition: ')) end, { desc = "Debug: Conditional Breakpoint" })
+vim.keymap.set('n', '<leader>du', function() require("dapui").toggle() end, { desc = "Debug: Toggle UI" })
