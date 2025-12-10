@@ -43,17 +43,12 @@ return {
       },
     },
     config = function()
-      require('conform').setup({
-        formatters_by_ft = {
-        }
-      })
       local capabilities = require('blink.cmp').get_lsp_capabilities()
 
       require('fidget').setup({})
       require('mason').setup()
       require('mason-lspconfig').setup({
         ensure_installed = {
-          'lua_ls',
         },
         handlers = {
           function(server_name) -- default handler (optional)
