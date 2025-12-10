@@ -31,3 +31,21 @@ vim.api.nvim_create_autocmd("FileType", {
     vim.keymap.set("n", "q", "<cmd>close<cr>", { buffer = event.buf, silent = true })
   end,
 })
+
+-- Auto-close for source code files
+vim.api.nvim_create_autocmd("FileType", {
+  group = augroup("autoclose"),
+  pattern = {
+    "lua", "python", "javascript", "typescript", "json", "yaml", "go", "rust", "c", "cpp", "java", "html", "css", "scss", "less", "php", "ruby", "markdown", "vue", "svelte", "xml", "sh", "bash", "zsh", "fish",
+  },
+  callback = function(event)
+    local opts = { buffer = event.buf, silent = true }
+    vim.keymap.set("i", "(", "()<left>", opts)
+    vim.keymap.set("i", "{", "{}<left>", opts)
+    vim.keymap.set("i", "[", "[]<left>", opts)
+    vim.keymap.set("i", "\"", "\"\"<left>", opts)
+    vim.keymap.set("i", "'", "''<left>", opts)
+    vim.keymap.set("i", "`", "``<left>", opts)
+  end,
+})
+
