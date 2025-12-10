@@ -2,7 +2,7 @@ return {
   {
     'tpope/vim-fugitive',
     config = function()
-      vim.keymap.set('n', '<leader>gs', vim.cmd.Git)
+      vim.keymap.set('n', '<leader>gs', vim.cmd.Git, { desc = 'Fugitive: Git status' })
     end
   },
 
@@ -10,7 +10,7 @@ return {
     'mbbill/undotree',
     lazy = false,
     config = function()
-      vim.keymap.set('n', "<leader>u", vim.cmd.UndotreeToggle)
+      vim.keymap.set('n', "<leader>u", vim.cmd.UndotreeToggle, { desc = 'Undotree: Toggle' })
     end
   },
   {

@@ -90,6 +90,18 @@ return {
           prefix = '',
         },
       })
+      vim.keymap.set('n', '<leader>f', vim.lsp.buf.format, { desc = 'LSP: Format code' })
+      vim.keymap.set({ 'n', 'i' }, '<F2>', vim.lsp.buf.rename, { desc = 'LSP: Rename' })
+      vim.keymap.set({ 'n', 'v', 'i' }, '<C-/>', vim.lsp.buf.code_action,
+        { silent = true, noremap = true, desc = 'LSP: Code action' })
+
+      vim.keymap.set('n', 'gd', vim.lsp.buf.definition, { desc = 'LSP: Go to definition' })
+      vim.keymap.set('n', 'gD', vim.lsp.buf.declaration, { desc = 'LSP: Go to declaration' })
+      vim.keymap.set('n', 'gr', vim.lsp.buf.references, { desc = 'LSP: Go to references' })
+      vim.keymap.set('n', 'gi', vim.lsp.buf.implementation, { desc = 'LSP: Go to implementation' })
+      vim.keymap.set('n', 'K', vim.lsp.buf.hover, { desc = 'LSP: Show signature' })
+      vim.keymap.set('n', '<leader>e', vim.diagnostic.open_float, { desc = 'LSP: Open diagnostic float' })
+      vim.keymap.set('n', '<leader>q', vim.diagnostic.setloclist, { desc = 'LSP: Set diagnostic loclist' })
     end
   },
   {
@@ -216,6 +228,16 @@ return {
 
       -- Use the same config for C and Rust if needed
       dap.configurations.c = dap.configurations.cpp
+
+      -- Debugging keymaps
+      vim.keymap.set('n', '<F5>', function() require("dap").continue() end, { desc = "DAP: Start/Continue" })
+      vim.keymap.set('n', '<F10>', function() require("dap").step_over() end, { desc = "DAP: Step Over" })
+      vim.keymap.set('n', '<F11>', function() require("dap").step_into() end, { desc = "DAP: Step Into" })
+      vim.keymap.set('n', '<F12>', function() require("dap").step_out() end, { desc = "DAP: Step Out" })
+      vim.keymap.set('n', '<leader>b', function() require("dap").toggle_breakpoint() end, { desc = "DAP: Toggle Breakpoint" })
+      vim.keymap.set('n', '<leader>B', function() require("dap").set_breakpoint(vim.fn.input('Breakpoint condition: ')) end,
+        { desc = "DAP: Conditional Breakpoint" })
+      vim.keymap.set('n', '<leader>du', function() require("dapui").toggle() end, { desc = "DAP: Toggle UI" })
     end,
   },
 }

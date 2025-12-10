@@ -69,22 +69,22 @@ return {
         -- Set to `false` to remove a keymap
         -- See :help oil-actions for a list of all available actions
         keymaps = {
-          ["g?"] = { "actions.show_help", mode = "n" },
-          ["<CR>"] = "actions.select",
-          ["<C-s>"] = { "actions.select", opts = { vertical = true } },
-          ["<C-h>"] = { "actions.select", opts = { horizontal = true } },
-          ["<C-t>"] = { "actions.select", opts = { tab = true } },
-          ["<C-p>"] = "actions.preview",
-          ["<C-c>"] = { "actions.close", mode = "n" },
-          ["<C-l>"] = "actions.refresh",
-          ["-"] = { "actions.parent", mode = "n" },
-          ["_"] = { "actions.open_cwd", mode = "n" },
-          ["`"] = { "actions.cd", mode = "n" },
-          ["~"] = { "actions.cd", opts = { scope = "tab" }, mode = "n" },
-          ["gs"] = { "actions.change_sort", mode = "n" },
-          ["gx"] = "actions.open_external",
-          ["g."] = { "actions.toggle_hidden", mode = "n" },
-          ["g\\"] = { "actions.toggle_trash", mode = "n" },
+          ["g?"] = { "actions.show_help", mode = "n", desc = "Oil.nvim: Show help" },
+          ["<CR>"] = { "actions.select", desc = "Oil.nvim: Select" },
+          ["<C-s>"] = { "actions.select", opts = { vertical = true }, desc = "Oil.nvim: Select in vertical split" },
+          ["<C-h>"] = { "actions.select", opts = { horizontal = true }, desc = "Oil.nvim: Select in horizontal split" },
+          ["<C-t>"] = { "actions.select", opts = { tab = true }, desc = "Oil.nvim: Select in new tab" },
+          ["<C-p>"] = { "actions.preview", desc = "Oil.nvim: Preview file" },
+          ["<C-c>"] = { "actions.close", mode = "n", desc = "Oil.nvim: Close" },
+          ["<C-l>"] = { "actions.refresh", desc = "Oil.nvim: Refresh" },
+          ["-"] = { "actions.parent", mode = "n", desc = "Oil.nvim: Go to parent directory" },
+          ["_"] = { "actions.open_cwd", mode = "n", desc = "Oil.nvim: Open current working directory" },
+          ["`"] = { "actions.cd", mode = "n", desc = "Oil.nvim: Change directory" },
+          ["~"] = { "actions.cd", opts = { scope = "tab" }, mode = "n", desc = "Oil.nvim: Change directory (tab scope)" },
+          ["gs"] = { "actions.change_sort", mode = "n", desc = "Oil.nvim: Change sort order" },
+          ["gx"] = { "actions.open_external", desc = "Oil.nvim: Open externally" },
+          ["g."] = { "actions.toggle_hidden", mode = "n", desc = "Oil.nvim: Toggle hidden files" },
+          ["g\\"] = { "actions.toggle_trash", mode = "n", desc = "Oil.nvim: Toggle trash" }
         },
         -- Set to false to disable all of the above keymaps
         use_default_keymaps = true,
@@ -238,7 +238,8 @@ return {
         end
       end
 
-      vim.keymap.set('n', '<leader>o', toggle_oil_sidebar, { desc = 'Toggle file explorer' })
+      vim.keymap.set('n', '<leader>o', toggle_oil_sidebar, { desc = 'Oil.nvim: Toggle file explorer' })
+      vim.keymap.set('n', '<leader>pf', '<CMD>Oil<CR>', { desc = 'Oil.nvim: Open parent directory' })
 
       local oil_augroup = vim.api.nvim_create_augroup("oil_autocmds", { clear = true })
       vim.api.nvim_create_autocmd("VimEnter", {
