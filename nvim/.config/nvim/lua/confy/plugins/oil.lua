@@ -224,12 +224,15 @@ return {
         return nil
       end
 
+      local SIDEBAR_WIDTH = 30 -- width in characters
+
       local function toggle_oil_sidebar()
         local oil_win = find_oil_window()
         if oil_win then
           vim.api.nvim_win_close(oil_win, true)
         else
           vim.cmd("rightbelow vsplit")
+          vim.cmd("vertical resize " .. SIDEBAR_WIDTH)
           vim.cmd("edit .")
           vim.cmd("wincmd p")
         end
