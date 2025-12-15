@@ -74,7 +74,7 @@ return {
           ["<C-s>"] = { "actions.select", opts = { vertical = true }, desc = "Oil.nvim: Select in vertical split" },
           ["<C-h>"] = { "actions.select", opts = { horizontal = true }, desc = "Oil.nvim: Select in horizontal split" },
           ["<C-t>"] = { "actions.select", opts = { tab = true }, desc = "Oil.nvim: Select in new tab" },
-          ["<C-p>"] = { "actions.preview", desc = "Oil.nvim: Preview file" },
+          ["<C-S-p>"] = { "actions.preview", desc = "Oil.nvim: Preview file" },
           ["<C-c>"] = { "actions.close", mode = "n", desc = "Oil.nvim: Close" },
           ["<C-l>"] = { "actions.refresh", desc = "Oil.nvim: Refresh" },
           ["-"] = { "actions.parent", mode = "n", desc = "Oil.nvim: Go to parent directory" },
