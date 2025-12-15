@@ -1,0 +1,90 @@
+#!/bin/bash
+
+# A script to control gaps in hyprland.
+#
+# It can increase, decrease, or reset the gaps while maintaining the ratio.
+#
+# Usage:
+# gaps.sh (inc|dec|reset) [value]
+#
+# inc: increases the inner gaps by the given value and outer gaps by 4 * value
+# dec: decreases the inner gaps by the given value and outer gaps by 4 * value
+# reset: resets the gaps to their default values (5 and 20)
+
+OPERATION=$1
+VALUE=$2
+
+# Default gap values
+DEFAULT_GAPS_IN=5
+DEFAULT_GAPS_OUT=20
+
+# Max inner gap value
+MAX_GAPS_IN=25
+
+# Function to get the current gap value
+get_gap_value() {
+    local GAPS_OPTION=$1
+    local GAPS_OUTPUT=$(hyprctl getoption $GAPS_OPTION)
+
+    if echo "$GAPS_OUTPUT" | grep -q "int:"; then
+        echo "$GAPS_OUTPUT" | awk -F ' ' '{print $2}'
+    elif echo "$GAPS_OUTPUT" | grep -q "custom type:"; then
+        echo "$GAPS_OUTPUT" | awk -F ' ' '{print $3}'
+    else
+        # Fallback to a default value if parsing fails
+        if [ "$GAPS_OPTION" == "general:gaps_in" ]; then
+            echo "$DEFAULT_GAPS_IN"
+        else
+            echo "$DEFAULT_GAPS_OUT"
+        fi
+    fi
+}
+
+CURRENT_GAPS_IN=$(get_gap_value "general:gaps_in")
+CURRENT_GAPS_OUT=$(get_gap_value "general:gaps_out")
+
+case $OPERATION in
+"inc")
+    NEW_GAPS_IN=$((CURRENT_GAPS_IN + VALUE))
+    NEW_GAPS_OUT=$((CURRENT_GAPS_OUT + (VALUE * 4)))
+
+    if [ "$NEW_GAPS_IN" -gt "$MAX_GAPS_IN" ]; then
+        NEW_GAPS_IN=$MAX_GAPS_IN
+        NEW_GAPS_OUT=$((MAX_GAPS_IN * 4))
+    fi
+
+	hyprctl keyword general:gaps_in $NEW_GAPS_IN
+	hyprctl keyword general:gaps_out $NEW_GAPS_OUT
+	;;
+"dec")
+    if [ "$CURRENT_GAPS_IN" -eq "$DEFAULT_GAPS_IN" ]; then
+        # If we are at the default, the next step is 0 gaps
+        hyprctl keyword general:gaps_in 0
+        hyprctl keyword general:gaps_out 0
+    elif [ "$CURRENT_GAPS_IN" -eq "0" ]; then
+        # If we are at 0, do nothing
+        :
+    else
+        # Otherwise, decrease the gaps
+	    NEW_GAPS_IN=$((CURRENT_GAPS_IN - VALUE))
+        NEW_GAPS_OUT=$((CURRENT_GAPS_OUT - (VALUE * 4)))
+
+        # Don't go below the default, unless we are setting to 0
+        if [ "$NEW_GAPS_IN" -lt "$DEFAULT_GAPS_IN" ]; then
+            NEW_GAPS_IN=$DEFAULT_GAPS_IN
+            NEW_GAPS_OUT=$DEFAULT_GAPS_OUT
+        fi
+
+	    hyprctl keyword general:gaps_in $NEW_GAPS_IN
+	    hyprctl keyword general:gaps_out $NEW_GAPS_OUT
+    fi
+	;;
+"reset")
+    hyprctl keyword general:gaps_in $DEFAULT_GAPS_IN
+    hyprctl keyword general:gaps_out $DEFAULT_GAPS_OUT
+    ;;
+*)
+	echo "Unknown operation: $OPERATION"
+	echo "Usage: gaps.sh (inc|dec|reset) [value]"
+	;;
+esac
