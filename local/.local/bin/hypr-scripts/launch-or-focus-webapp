@@ -9,4 +9,4 @@ WINDOW_PATTERN="$1"
 shift
 LAUNCH_COMMAND="~/.local/bin/launch-webapp $@"
 
-exec ~/.local/bin/launch-or-focus "$WINDOW_PATTERN" "$LAUNCH_COMMAND"
+exec ~/.local/bin/hypr-scripts/launch-or-focus "$WINDOW_PATTERN" "$LAUNCH_COMMAND"
