@@ -24,22 +24,7 @@ return {
       servers = {
         -- Ensure mesonlsp is set up
         mesonlsp = {},
-        -- Configure clangd specifically
-        clangd = {
-          -- Essential arguments for clangd
-          cmd = {
-            "clangd",
-            "--background-index",      -- Index project in background
-            "--clang-tidy",            -- Real-time linting
-            "--header-insertion=iwyu", -- Auto-import headers
-            "--completion-style=detailed",
-          },
-          init_options = {
-            usePlaceholders = true,
-            completeUnimported = true,
-            clangdFileStatus = true,
-          },
-        },
+
       },
     },
     config = function()
@@ -55,6 +40,32 @@ return {
             require('lspconfig')[server_name].setup({
               capabilities = capabilities,
               root_dir = require('lspconfig').util.root_pattern(unpack(root_files)),
+            })
+          end,
+
+          ['clangd'] = function()
+            local lspconfig = require('lspconfig')
+            lspconfig.clangd.setup({
+              capabilities = capabilities,
+              root_dir = lspconfig.util.root_pattern(
+                "compile_commands.json",
+                "compile_flags.txt",
+                ".git"
+              ),
+              cmd = {
+                "clangd",
+                "--background-index",      -- Index project in background
+                "--clang-tidy",            -- Real-time linting
+                "--header-insertion=iwyu", -- Auto-import headers
+                "--completion-style=detailed",
+                "--fallback-style=llvm",   -- Ensure consistent formatting
+                "-config-file=_clangd",    -- Look for a .clangd config file
+              },
+              init_options = {
+                usePlaceholders = true,
+                completeUnimported = true,
+                clangdFileStatus = true,
+              },
             })
           end,
 
@@ -131,7 +142,7 @@ return {
       -- C-k: Toggle signature help (if signature.enabled = true)
       --
       -- See :h blink-cmp-config-keymap for defining your own keymap
-            keymap = {
+      keymap = {
         ['<C-f>'] = { 'snippet_forward' },
         ['<C-b>'] = { 'snippet_backward' },
         ['<Tab>'] = { 'select_next', 'fallback' },
@@ -184,7 +195,7 @@ return {
       -- Link Mason installed debuggers to nvim-dap
       "jay-babu/mason-nvim-dap.nvim",
     },
-    
+
     config = function()
       local dap = require("dap")
       local dapui = require("dapui")
@@ -239,8 +250,10 @@ return {
       vim.keymap.set('n', '<F10>', function() require("dap").step_over() end, { desc = "DAP: Step Over" })
       vim.keymap.set('n', '<F11>', function() require("dap").step_into() end, { desc = "DAP: Step Into" })
       vim.keymap.set('n', '<F12>', function() require("dap").step_out() end, { desc = "DAP: Step Out" })
-      vim.keymap.set('n', '<leader>b', function() require("dap").toggle_breakpoint() end, { desc = "DAP: Toggle Breakpoint" })
-      vim.keymap.set('n', '<leader>B', function() require("dap").set_breakpoint(vim.fn.input('Breakpoint condition: ')) end,
+      vim.keymap.set('n', '<leader>b', function() require("dap").toggle_breakpoint() end,
+        { desc = "DAP: Toggle Breakpoint" })
+      vim.keymap.set('n', '<leader>B',
+        function() require("dap").set_breakpoint(vim.fn.input('Breakpoint condition: ')) end,
         { desc = "DAP: Conditional Breakpoint" })
       vim.keymap.set('n', '<leader>du', function() require("dapui").toggle() end, { desc = "DAP: Toggle UI" })
     end,
