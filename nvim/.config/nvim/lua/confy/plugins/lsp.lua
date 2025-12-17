@@ -113,6 +113,8 @@ return {
       vim.keymap.set('n', 'K', vim.lsp.buf.hover, { desc = 'LSP: Show signature' })
       vim.keymap.set('n', '<leader>e', vim.diagnostic.open_float, { desc = 'LSP: Open diagnostic float' })
       vim.keymap.set('n', '<leader>q', vim.diagnostic.setloclist, { desc = 'LSP: Set diagnostic loclist' })
+      vim.keymap.set('n', '<leader>]', vim.diagnostic.goto_next, { desc = 'LSP: Next diagnostic' })
+      vim.keymap.set('n', '<leader>[', vim.diagnostic.goto_prev, { desc = 'LSP: Previous diagnostic' })
     end
   },
   {
