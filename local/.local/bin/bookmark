@@ -191,9 +191,9 @@ def normalize_title(t: str):
     escaped_suffixes = []
     for s in suffixes:
         escaped_suffixes.append(re.escape(s))
-    
+
     pattern_interior = "|".join(escaped_suffixes)
-    
+
     # Using simple string concatenation instead of f-string
     # Using only hyphen to avoid unicode issues
     final_pattern = r"\s+-\s+(" + pattern_interior + r")$"
@@ -305,7 +305,7 @@ def chromium_query_latest_by_title(active_title: str):
 
         db_path_copy = tmp_dir / "History"
 
-        
+
 
         # Use a robust copy method to ensure the file is copied correctly.
 
@@ -313,7 +313,7 @@ def chromium_query_latest_by_title(active_title: str):
 
             shutil.copyfileobj(f_src, f_dst)
 
-            
+
 
         path = f"file:{db_path_copy}?mode=ro"
 
