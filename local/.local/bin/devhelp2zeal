@@ -7,6 +7,7 @@ import shutil
 import xml.etree.ElementTree as ET
 import argparse
 import sys
+import tempfile
 
 
 def parse_arguments():
@@ -170,15 +171,24 @@ def main():
 
     doc_dir = os.path.dirname(args.devhelp_path)
 
-    docset_path, contents_path, resources_path, docs_dest = create_docset_structure(
-        args.docset_name
-    )
+    # Create a temporary directory to build the docset
+    temp_build_dir = tempfile.mkdtemp()
+    original_cwd = os.getcwd()
+    os.chdir(temp_build_dir)
 
-    copy_html_files(doc_dir, docs_dest)
-    handle_icon_copy(args.devhelp_path, doc_dir, docset_path)
-    create_info_plist(contents_path, args.docset_name)
-    create_and_populate_search_index(args.devhelp_path, resources_path)
-    move_docset_to_destination(docset_path, args.path)
+    try:
+        docset_path, contents_path, resources_path, docs_dest = create_docset_structure(
+            args.docset_name
+        )
+
+        copy_html_files(doc_dir, docs_dest)
+        handle_icon_copy(args.devhelp_path, doc_dir, docset_path)
+        create_info_plist(contents_path, args.docset_name)
+        create_and_populate_search_index(args.devhelp_path, resources_path)
+        move_docset_to_destination(docset_path, args.path)
+    finally:
+        os.chdir(original_cwd)
+        shutil.rmtree(temp_build_dir)
 
 
 if __name__ == "__main__":
