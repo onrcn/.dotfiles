@@ -1,0 +1,117 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
+import os
+import sqlite3
+import shutil
+import xml.etree.ElementTree as ET
+import sys
+
+
+def main():
+    if len(sys.argv) < 3:
+        print("Usage: devhelp2zeal <path_to_devhelp2> <output_docset_name>")
+        print(
+            "Example: devhelp2zeal /usr/share/doc/glib-2.0/gobject/GObject-2.0.devhelp2 GObject"
+        )
+        sys.exit(1)
+
+    devhelp_path = sys.argv[1]
+    docset_name = sys.argv[2]
+    doc_dir = os.path.dirname(devhelp_path)  # The folder containing html files
+
+    # Docset Structure
+    docset_path = f"{docset_name}.docset"
+    contents_path = os.path.join(docset_path, "Contents")
+    resources_path = os.path.join(contents_path, "Resources")
+    docs_dest = os.path.join(resources_path, "Documents")
+
+    # Clean build
+    if os.path.exists(docset_path):
+        shutil.rmtree(docset_path)
+
+    print(f"-> Creating docset structure for {docset_name}...")
+    os.makedirs(docs_dest)
+
+    # Copy HTML files
+    print(f"-> Copying HTML files from {doc_dir}...")
+    _ = shutil.copytree(doc_dir, docs_dest, dirs_exist_ok=True)
+
+    # Create Info.plist
+    info_plist = f"""<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>CFBundleIdentifier</key>
+    <string>{docset_name}</string>
+    <key>CFBundleName</key>
+    <string>{docset_name}</string>
+    <key>DocSetPlatformFamily</key>
+    <string>{docset_name}</string>
+    <key>isDashDocset</key>
+    <true/>
+    <key>dashIndexFilePath</key>
+    <string>index.html</string>
+</dict>
+</plist>"""
+
+    with open(os.path.join(contents_path, "Info.plist"), "w") as f:
+        _ = f.write(info_plist)
+
+    # Create SQLite Index
+    print("-> Indexing API...")
+    db_path = os.path.join(resources_path, "docSet.dsidx")
+    conn = sqlite3.connect(db_path)
+    cur = conn.cursor()
+    _ = cur.execute(
+        "CREATE TABLE searchIndex(id INTEGER PRIMARY KEY, name TEXT, type TEXT, path TEXT);"
+    )
+    _ = cur.execute("CREATE UNIQUE INDEX anchor ON searchIndex (name, type, path);")
+
+    # Parse Devhelp XML
+    tree = ET.parse(devhelp_path)
+    root = tree.getroot()
+
+    # Namespace handling usually not needed for simple parsing, but devhelp uses one
+    ns = {"d": "http://www.devhelp.net/book"}
+
+    count = 0
+    # Loop through keywords/functions
+    for function in root.findall(".//d:keyword", namespaces=ns):
+        name = function.get("name")
+        link = function.get("link")
+        type_raw = function.get("type")  # e.g., "function", "struct"
+
+        # Map Devhelp types to Dash types
+        dash_type = "Function"
+        if type_raw == "struct":
+            dash_type = "Struct"
+        elif type_raw == "enum":
+            dash_type = "Enum"
+        elif type_raw == "macro":
+            dash_type = "Macro"
+        elif type_raw == "property":
+            dash_type = "Property"
+        elif type_raw == "signal":
+            dash_type = "Event"
+
+        if name and link:
+            try:
+                _ = cur.execute(
+                    "INSERT OR IGNORE INTO searchIndex(name, type, path) VALUES (?, ?, ?)",
+                    (name, dash_type, link),
+                )
+                count += 1
+            except Exception as e:
+                pass
+
+    conn.commit()
+    conn.close()
+    print(f"-> Success! Indexed {count} entries.")
+    print(
+        f"-> Move '{docset_path}' to ~/.local/share/Zeal/Zeal/docsets/ and restart Zeal."
+    )
+
+
+if __name__ == "__main__":
+    main()
