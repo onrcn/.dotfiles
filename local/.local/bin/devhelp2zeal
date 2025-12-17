@@ -65,60 +65,40 @@ def copy_html_files(source_dir, destination_dir):
     shutil.copytree(source_dir, destination_dir, dirs_exist_ok=True)
 
 
-def find_and_copy_icons(devhelp_path, doc_dir, docset_path):
+def find_and_copy_icons(doc_dir, docset_path):
     """
-    Finds and copies icon.png and icon@2x.png for the docset.
-    It checks the XML for an 'icon' attribute first, then searches the doc directory.
+    Brute force search for icon files in the doc directory.
     """
-    icon_copied = False
-    retina_icon_copied = False
+    # Priority list: favicon first (usually best quality), then generic names
+    target_names = [
+        "favicon.png",
+        "favicon.ico",
+        "logo.png",
+        "logo.svg",  # Zeal supports SVG icons now
+        "icon.png",
+    ]
 
-    def copy_if_found(src_path, dest_filename):
-        nonlocal icon_copied, retina_icon_copied
-        if os.path.exists(src_path):
-            print(f"-> Copying '{src_path}' to '{dest_filename}'")
-            shutil.copy(src_path, os.path.join(docset_path, dest_filename))
-            if dest_filename == "icon.png":
-                icon_copied = True
-            elif dest_filename == "icon@2x.png":
-                retina_icon_copied = True
-            return True
-        return False
+    print(f"-> Searching for icons in {doc_dir}...")
 
-    # Strategy 1: Look for 'icon' attribute in devhelp XML
-    try:
-        tree = ET.parse(devhelp_path)
-        root = tree.getroot()
-        icon_name_from_xml = root.get("icon")
-        if icon_name_from_xml:
-            icon_path = os.path.join(doc_dir, icon_name_from_xml)
-            if copy_if_found(icon_path, "icon.png"):
-                # Try to find a retina version based on the XML-specified icon
-                base, ext = os.path.splitext(icon_path)
-                retina_icon_path = f"{base}@2x{ext}"
-                copy_if_found(retina_icon_path, "icon@2x.png")
+    # os.walk is recursive by default
+    for root, dirs, files in os.walk(doc_dir):
+        # Check files in current directory against our target list
+        for target in target_names:
+            if target in files:
+                src_path = os.path.join(root, target)
+                dest_path = os.path.join(docset_path, "icon.png")
 
-    except ET.ParseError:
-        print(f"-> Warning: Could not parse {devhelp_path}")
+                print(f"-> Found icon: '{src_path}'")
+                shutil.copy(src_path, dest_path)
 
-    # Strategy 2: Search recursively for 'icon.png' and 'icon@2x.png'
-    if not icon_copied or not retina_icon_copied:
-        for root, _, files in os.walk(doc_dir):
-            if not icon_copied and "icon.png" in files:
-                copy_if_found(os.path.join(root, "icon.png"), "icon.png")
+                # If we found a png, let's just use it for the retina icon too
+                # (Zeal handles scaling fine usually)
+                if target.endswith(".png"):
+                    shutil.copy(src_path, os.path.join(docset_path, "icon@2x.png"))
 
-            if not retina_icon_copied and "icon@2x.png" in files:
-                copy_if_found(os.path.join(root, "icon@2x.png"), "icon@2x.png")
+                return  # Found one, job done. Stop searching.
 
-            if icon_copied and retina_icon_copied:
-                break  # Found both, no need to search further.
-
-    if not icon_copied and not retina_icon_copied:
-        print("-> Warning: No icon found for this docset.")
-    elif not icon_copied:
-        print("-> Warning: Standard icon 'icon.png' not found.")
-    elif not retina_icon_copied:
-        print("-> Info: Retina icon 'icon@2x.png' not found.")
+    print("-> Warning: No icon found. Zeal will use a default icon.")
 
 
 def create_info_plist(contents_path, docset_name):
@@ -155,38 +135,51 @@ def create_and_populate_search_index(devhelp_path, resources_path):
     )
     _ = cur.execute("CREATE UNIQUE INDEX anchor ON searchIndex (name, type, path);")
 
-    tree = ET.parse(devhelp_path)
-    root = tree.getroot()
-    ns = {"d": "http://www.devhelp.net/book"}
+    try:
+        tree = ET.parse(devhelp_path)
+        root = tree.getroot()
+        ns = {"d": "http://www.devhelp.net/book"}
 
-    count = 0
-    for function in root.findall(".//d:keyword", namespaces=ns):
-        name = function.get("name")
-        link = function.get("link")
-        type_raw = function.get("type")
+        # Try finding keywords with namespace first
+        keywords = root.findall(".//d:keyword", namespaces=ns)
+        # Fallback for old devhelp files without namespace
+        if not keywords:
+            keywords = root.findall(".//keyword")
 
+        count = 0
         dash_type_map = {
             "struct": "Struct",
             "enum": "Enum",
             "macro": "Macro",
             "property": "Property",
             "signal": "Event",
+            "function": "Function",
         }
-        dash_type = dash_type_map.get(type_raw, "Function")
 
-        if name and link:
-            try:
-                cur.execute(
-                    "INSERT OR IGNORE INTO searchIndex(name, type, path) VALUES (?, ?, ?)",
-                    (name, dash_type, link),
-                )
-                count += 1
-            except Exception:
-                pass
+        for function in keywords:
+            name = function.get("name")
+            link = function.get("link")
+            type_raw = function.get("type")
 
-    conn.commit()
-    conn.close()
-    print(f"-> Success! Indexed {count} entries.")
+            dash_type = dash_type_map.get(type_raw, "Function")
+
+            if name and link:
+                try:
+                    cur.execute(
+                        "INSERT OR IGNORE INTO searchIndex(name, type, path) VALUES (?, ?, ?)",
+                        (name, dash_type, link),
+                    )
+                    count += 1
+                except Exception:
+                    pass
+
+        conn.commit()
+        print(f"-> Success! Indexed {count} entries.")
+
+    except ET.ParseError:
+        print(f"-> Error: Could not parse XML at {devhelp_path}")
+    finally:
+        conn.close()
 
 
 def move_docset_to_destination(docset_path, destination_path):
@@ -209,6 +202,14 @@ def move_docset_to_destination(docset_path, destination_path):
 def main():
     args = parse_arguments()
 
+    # Convert the user's path to an absolute path immediately.
+    # This prevents the path from breaking when we os.chdir() into the temp dir later.
+    args.devhelp_path = os.path.abspath(args.devhelp_path)
+
+    if not os.path.exists(args.devhelp_path):
+        print(f"Error: File not found at {args.devhelp_path}")
+        sys.exit(1)
+
     doc_dir = os.path.dirname(args.devhelp_path)
 
     # Create a temporary directory to build the docset
@@ -222,7 +223,7 @@ def main():
         )
 
         copy_html_files(doc_dir, docs_dest)
-        find_and_copy_icons(args.devhelp_path, doc_dir, docset_path)
+        find_and_copy_icons(doc_dir, docset_path)
         create_info_plist(contents_path, args.docset_name)
         create_and_populate_search_index(args.devhelp_path, resources_path)
         move_docset_to_destination(docset_path, args.path)
