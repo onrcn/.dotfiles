@@ -16,19 +16,17 @@ def parse_arguments():
         description="Convert a devhelp book to a Zeal docset.",
         formatter_class=argparse.RawTextHelpFormatter,
     )
-    parser.add_argument("devhelp_path", help="Path to the .devhelp2 file")
-    parser.add_argument(
+    _ = parser.add_argument("devhelp_path", help="Path to the .devhelp2 file")
+    _ = parser.add_argument(
         "docset_name",
         nargs="?",
         default=None,
-        help="Name of the output docset (e.g., GObject). "
-        "If not provided, it will be derived from the devhelp file name.",
+        help="Name of the output docset (e.g., GObject). If not provided, it will be derived from the devhelp file name.",
     )
-    parser.add_argument(
+    _ = parser.add_argument(
         "--path",
         default="~/.local/share/Zeal/Zeal/docsets",
-        help="Path to move the generated docset to. "
-        "Defaults to ~/.local/share/Zeal/Zeal/docsets",
+        help="Path to move the generated docset to. Defaults to ~/.local/share/Zeal/Zeal/docsets",
     )
 
     if len(sys.argv) == 1:
@@ -67,18 +65,60 @@ def copy_html_files(source_dir, destination_dir):
     shutil.copytree(source_dir, destination_dir, dirs_exist_ok=True)
 
 
-def handle_icon_copy(devhelp_path, doc_dir, docset_path):
-    """Parses the devhelp XML to find and copy an icon if specified."""
-    tree = ET.parse(devhelp_path)
-    root = tree.getroot()
-    icon_name = root.get("icon")
-    if icon_name:
-        icon_path = os.path.join(doc_dir, icon_name)
-        if os.path.exists(icon_path):
-            print(f"-> Copying icon from {icon_path}...")
-            shutil.copy(icon_path, os.path.join(docset_path, "icon.png"))
-        else:
-            print(f"-> Icon '{icon_name}' not found at '{icon_path}'")
+def find_and_copy_icons(devhelp_path, doc_dir, docset_path):
+    """
+    Finds and copies icon.png and icon@2x.png for the docset.
+    It checks the XML for an 'icon' attribute first, then searches the doc directory.
+    """
+    icon_copied = False
+    retina_icon_copied = False
+
+    def copy_if_found(src_path, dest_filename):
+        nonlocal icon_copied, retina_icon_copied
+        if os.path.exists(src_path):
+            print(f"-> Copying '{src_path}' to '{dest_filename}'")
+            shutil.copy(src_path, os.path.join(docset_path, dest_filename))
+            if dest_filename == "icon.png":
+                icon_copied = True
+            elif dest_filename == "icon@2x.png":
+                retina_icon_copied = True
+            return True
+        return False
+
+    # Strategy 1: Look for 'icon' attribute in devhelp XML
+    try:
+        tree = ET.parse(devhelp_path)
+        root = tree.getroot()
+        icon_name_from_xml = root.get("icon")
+        if icon_name_from_xml:
+            icon_path = os.path.join(doc_dir, icon_name_from_xml)
+            if copy_if_found(icon_path, "icon.png"):
+                # Try to find a retina version based on the XML-specified icon
+                base, ext = os.path.splitext(icon_path)
+                retina_icon_path = f"{base}@2x{ext}"
+                copy_if_found(retina_icon_path, "icon@2x.png")
+
+    except ET.ParseError:
+        print(f"-> Warning: Could not parse {devhelp_path}")
+
+    # Strategy 2: Search recursively for 'icon.png' and 'icon@2x.png'
+    if not icon_copied or not retina_icon_copied:
+        for root, _, files in os.walk(doc_dir):
+            if not icon_copied and "icon.png" in files:
+                copy_if_found(os.path.join(root, "icon.png"), "icon.png")
+
+            if not retina_icon_copied and "icon@2x.png" in files:
+                copy_if_found(os.path.join(root, "icon@2x.png"), "icon@2x.png")
+
+            if icon_copied and retina_icon_copied:
+                break  # Found both, no need to search further.
+
+    if not icon_copied and not retina_icon_copied:
+        print("-> Warning: No icon found for this docset.")
+    elif not icon_copied:
+        print("-> Warning: Standard icon 'icon.png' not found.")
+    elif not retina_icon_copied:
+        print("-> Info: Retina icon 'icon@2x.png' not found.")
 
 
 def create_info_plist(contents_path, docset_name):
@@ -101,7 +141,7 @@ def create_info_plist(contents_path, docset_name):
 </plist>"""
 
     with open(os.path.join(contents_path, "Info.plist"), "w") as f:
-        f.write(info_plist)
+        _ = f.write(info_plist)
 
 
 def create_and_populate_search_index(devhelp_path, resources_path):
@@ -110,10 +150,10 @@ def create_and_populate_search_index(devhelp_path, resources_path):
     db_path = os.path.join(resources_path, "docSet.dsidx")
     conn = sqlite3.connect(db_path)
     cur = conn.cursor()
-    cur.execute(
+    _ = cur.execute(
         "CREATE TABLE searchIndex(id INTEGER PRIMARY KEY, name TEXT, type TEXT, path TEXT);"
     )
-    cur.execute("CREATE UNIQUE INDEX anchor ON searchIndex (name, type, path);")
+    _ = cur.execute("CREATE UNIQUE INDEX anchor ON searchIndex (name, type, path);")
 
     tree = ET.parse(devhelp_path)
     root = tree.getroot()
@@ -182,7 +222,7 @@ def main():
         )
 
         copy_html_files(doc_dir, docs_dest)
-        handle_icon_copy(args.devhelp_path, doc_dir, docset_path)
+        find_and_copy_icons(args.devhelp_path, doc_dir, docset_path)
         create_info_plist(contents_path, args.docset_name)
         create_and_populate_search_index(args.devhelp_path, resources_path)
         move_docset_to_destination(docset_path, args.path)
