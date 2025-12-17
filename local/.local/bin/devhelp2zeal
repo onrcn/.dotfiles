@@ -1,0 +1,185 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
+import os
+import sqlite3
+import shutil
+import xml.etree.ElementTree as ET
+import argparse
+import sys
+
+
+def parse_arguments():
+    """Parses command-line arguments."""
+    parser = argparse.ArgumentParser(
+        description="Convert a devhelp book to a Zeal docset.",
+        formatter_class=argparse.RawTextHelpFormatter,
+    )
+    parser.add_argument("devhelp_path", help="Path to the .devhelp2 file")
+    parser.add_argument(
+        "docset_name",
+        nargs="?",
+        default=None,
+        help="Name of the output docset (e.g., GObject). "
+        "If not provided, it will be derived from the devhelp file name.",
+    )
+    parser.add_argument(
+        "--path",
+        default="~/.local/share/Zeal/Zeal/docsets",
+        help="Path to move the generated docset to. "
+        "Defaults to ~/.local/share/Zeal/Zeal/docsets",
+    )
+
+    if len(sys.argv) == 1:
+        parser.print_help(sys.stderr)
+        sys.exit(1)
+
+    args = parser.parse_args()
+
+    if not args.docset_name:
+        args.docset_name = os.path.splitext(os.path.basename(args.devhelp_path))[0]
+        # Remove .devhelp if it's there
+        if args.docset_name.endswith(".devhelp"):
+            args.docset_name = os.path.splitext(args.docset_name)[0]
+    return args
+
+
+def create_docset_structure(docset_name):
+    """Creates the necessary directory structure for the docset."""
+    docset_path = f"{docset_name}.docset"
+    contents_path = os.path.join(docset_path, "Contents")
+    resources_path = os.path.join(contents_path, "Resources")
+    docs_dest = os.path.join(resources_path, "Documents")
+
+    if os.path.exists(docset_path):
+        print(f"-> Cleaning existing docset directory: {docset_path}")
+        shutil.rmtree(docset_path)
+
+    print(f"-> Creating docset structure for {docset_name}...")
+    os.makedirs(docs_dest)
+    return docset_path, contents_path, resources_path, docs_dest
+
+
+def copy_html_files(source_dir, destination_dir):
+    """Copies HTML files from the source directory to the docset's Documents directory."""
+    print(f"-> Copying HTML files from {source_dir}...")
+    shutil.copytree(source_dir, destination_dir, dirs_exist_ok=True)
+
+
+def handle_icon_copy(devhelp_path, doc_dir, docset_path):
+    """Parses the devhelp XML to find and copy an icon if specified."""
+    tree = ET.parse(devhelp_path)
+    root = tree.getroot()
+    icon_name = root.get("icon")
+    if icon_name:
+        icon_path = os.path.join(doc_dir, icon_name)
+        if os.path.exists(icon_path):
+            print(f"-> Copying icon from {icon_path}...")
+            shutil.copy(icon_path, os.path.join(docset_path, "icon.png"))
+        else:
+            print(f"-> Icon '{icon_name}' not found at '{icon_path}'")
+
+
+def create_info_plist(contents_path, docset_name):
+    """Creates the Info.plist file for the docset."""
+    info_plist = f"""<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>CFBundleIdentifier</key>
+    <string>{docset_name}</string>
+    <key>CFBundleName</key>
+    <string>{docset_name}</string>
+    <key>DocSetPlatformFamily</key>
+    <string>{docset_name}</string>
+    <key>isDashDocset</key>
+    <true/>
+    <key>dashIndexFilePath</key>
+    <string>index.html</string>
+</dict>
+</plist>"""
+
+    with open(os.path.join(contents_path, "Info.plist"), "w") as f:
+        f.write(info_plist)
+
+
+def create_and_populate_search_index(devhelp_path, resources_path):
+    """Creates and populates the SQLite search index."""
+    print("-> Indexing API...")
+    db_path = os.path.join(resources_path, "docSet.dsidx")
+    conn = sqlite3.connect(db_path)
+    cur = conn.cursor()
+    cur.execute(
+        "CREATE TABLE searchIndex(id INTEGER PRIMARY KEY, name TEXT, type TEXT, path TEXT);"
+    )
+    cur.execute("CREATE UNIQUE INDEX anchor ON searchIndex (name, type, path);")
+
+    tree = ET.parse(devhelp_path)
+    root = tree.getroot()
+    ns = {"d": "http://www.devhelp.net/book"}
+
+    count = 0
+    for function in root.findall(".//d:keyword", namespaces=ns):
+        name = function.get("name")
+        link = function.get("link")
+        type_raw = function.get("type")
+
+        dash_type_map = {
+            "struct": "Struct",
+            "enum": "Enum",
+            "macro": "Macro",
+            "property": "Property",
+            "signal": "Event",
+        }
+        dash_type = dash_type_map.get(type_raw, "Function")
+
+        if name and link:
+            try:
+                cur.execute(
+                    "INSERT OR IGNORE INTO searchIndex(name, type, path) VALUES (?, ?, ?)",
+                    (name, dash_type, link),
+                )
+                count += 1
+            except Exception:
+                pass
+
+    conn.commit()
+    conn.close()
+    print(f"-> Success! Indexed {count} entries.")
+
+
+def move_docset_to_destination(docset_path, destination_path):
+    """Moves the created docset to the specified destination."""
+    dest_path = os.path.expanduser(destination_path)
+    if not os.path.exists(dest_path):
+        os.makedirs(dest_path)
+
+    final_docset_path = os.path.join(dest_path, os.path.basename(docset_path))
+    if os.path.exists(final_docset_path):
+        print(f"-> A docset already exists at {final_docset_path}. Replacing it.")
+        shutil.rmtree(final_docset_path)
+
+    print(f"-> Moving '{docset_path}' to '{dest_path}'...")
+    shutil.move(docset_path, dest_path)
+    print(f"-> Docset successfully created and moved to {final_docset_path}")
+    print("-> Please restart Zeal to see the new docset.")
+
+
+def main():
+    args = parse_arguments()
+
+    doc_dir = os.path.dirname(args.devhelp_path)
+
+    docset_path, contents_path, resources_path, docs_dest = create_docset_structure(
+        args.docset_name
+    )
+
+    copy_html_files(doc_dir, docs_dest)
+    handle_icon_copy(args.devhelp_path, doc_dir, docset_path)
+    create_info_plist(contents_path, args.docset_name)
+    create_and_populate_search_index(args.devhelp_path, resources_path)
+    move_docset_to_destination(docset_path, args.path)
+
+
+if __name__ == "__main__":
+    main()
