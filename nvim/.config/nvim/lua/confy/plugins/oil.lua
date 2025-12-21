@@ -238,7 +238,6 @@ return {
         end
       end
 
-      vim.keymap.set('n', '<leader>o', toggle_oil_sidebar, { desc = 'Oil.nvim: Toggle file explorer' })
       vim.keymap.set('n', '<leader>pf', '<CMD>Oil<CR>', { desc = 'Oil.nvim: Open parent directory' })
 
       local oil_augroup = vim.api.nvim_create_augroup("oil_autocmds", { clear = true })
