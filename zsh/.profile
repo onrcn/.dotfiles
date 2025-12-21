@@ -32,3 +32,4 @@ export PAGER=less
 export TERMINAL=kitty
 export XDG_DATA_DIRS="$HOME/.local/share:$XDG_DATA_DIRS"
 . "$HOME/.cargo/env"
+export LD_LIBRARY_PATH=/opt/cuda/lib:$LD_LIBRARY_PATH
