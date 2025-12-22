@@ -27,6 +27,9 @@ return {
     lazy = false,
   },
   {
+    'danilamihailov/beacon.nvim'
+  }, -- lazy calls setup() by itself
+  {
     "m00qek/baleia.nvim",
     version = "*",
     config = function()
