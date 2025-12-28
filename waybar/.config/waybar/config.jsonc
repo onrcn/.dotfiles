@@ -61,7 +61,7 @@
     "tooltip-format-disconnected": "Disconnected",
     "interval": 3,
     "spacing": 1,
-    "on-click": "omarchy-launch-wifi"
+    "on-click": "launch-wifi"
   },
   "battery": {
     "format": "{capacity}% {icon}",
@@ -113,7 +113,7 @@
     "tooltip": false
   },
   "tray": {
-    "icon-size": 16,
-    "spacing": 22
+    "icon-size": 14,
+    "spacing": 20
   }
 }
