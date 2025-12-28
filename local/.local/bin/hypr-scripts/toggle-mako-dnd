@@ -1,0 +1,11 @@
+#!/bin/bash
+
+# Toggle mako's do-not-disturb mode and send a notification.
+
+makoctl mode -t do-not-disturb && \
+    if makoctl mode | grep -q 'do-not-disturb'; then
+        notify-send "Mako" "Notifications silenced (Do Not Disturb)"
+    else
+        notify-send "Mako" "Notifications enabled"
+    fi
+
