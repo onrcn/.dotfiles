@@ -6,9 +6,9 @@ return {
     opts = {},
     -- MOVE KEYMAPS HERE ("keys" tells lazy to create these binds immediately)
     keys = {
-      { "<S-F6>", "<cmd>CompilerOpen<cr>",                      desc = "Compiler Open" },
-      { "<F6>",   "<cmd>CompilerStop<cr><cmd>CompilerRedo<cr>", desc = "Compiler Redo" },
-      { "<S-F7>", "<cmd>CompilerToggleResults<cr>",             desc = "Compiler Toggle Results" },
+      { "<leader>co", "<cmd>CompilerOpen<cr>",                      desc = "Compiler Open" },
+      { "<leader>cp", "<cmd>CompilerStop<cr><cmd>CompilerRedo<cr>", desc = "Compiler Redo" },
+      { "<leader>ct", "<cmd>CompilerToggleResults<cr>",             desc = "Compiler Toggle Results" },
     },
   },
   { -- The task runner we use
