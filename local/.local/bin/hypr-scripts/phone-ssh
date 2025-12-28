@@ -1,0 +1,22 @@
+#!/bin/bash
+
+# Find the local subnet
+SUBNET=$(ip -o -f inet addr show | awk '/scope global/ {print $4}' | head -n 1)
+
+# Notify user that we are scanning (optional)
+notify-send "Phone Connect" "Scanning network for phone..."
+
+# Scan for devices with port 8022 open
+# -p 8022: Check only port 8022
+# --open: Only show open ports
+# -oG -: Output grepable format
+PHONE_IP=$(nmap -p 8022 --open "$SUBNET" -oG - | awk '/Up$/{print $2}' | head -n 1)
+
+if [ -z "$PHONE_IP" ]; then
+    notify-send "Error" "Phone not found on network."
+    exit 1
+fi
+
+# Connect using your preferred terminal (e.g., kitty)
+notify-send "Found Phone" "Connecting to $PHONE_IP..."
+xdg-terminal-exec ssh -p 8022 u0_a384@"$PHONE_IP"
