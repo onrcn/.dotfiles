@@ -16,7 +16,7 @@ VALUE=$2
 
 # Default gap values
 DEFAULT_GAPS_IN=5
-DEFAULT_GAPS_OUT=20
+DEFAULT_GAPS_OUT=10
 
 # Max inner gap value
 MAX_GAPS_IN=25
@@ -46,11 +46,11 @@ CURRENT_GAPS_OUT=$(get_gap_value "general:gaps_out")
 case $OPERATION in
 "inc")
     NEW_GAPS_IN=$((CURRENT_GAPS_IN + VALUE))
-    NEW_GAPS_OUT=$((CURRENT_GAPS_OUT + (VALUE * 4)))
+    NEW_GAPS_OUT=$((CURRENT_GAPS_OUT + (VALUE * 2)))
 
     if [ "$NEW_GAPS_IN" -gt "$MAX_GAPS_IN" ]; then
         NEW_GAPS_IN=$MAX_GAPS_IN
-        NEW_GAPS_OUT=$((MAX_GAPS_IN * 4))
+        NEW_GAPS_OUT=$((MAX_GAPS_IN * 2))
     fi
 
 	hyprctl keyword general:gaps_in $NEW_GAPS_IN
@@ -67,7 +67,7 @@ case $OPERATION in
     else
         # Otherwise, decrease the gaps
 	    NEW_GAPS_IN=$((CURRENT_GAPS_IN - VALUE))
-        NEW_GAPS_OUT=$((CURRENT_GAPS_OUT - (VALUE * 4)))
+        NEW_GAPS_OUT=$((CURRENT_GAPS_OUT - (VALUE * 2)))
 
         # Don't go below the default, unless we are setting to 0
         if [ "$NEW_GAPS_IN" -lt "$DEFAULT_GAPS_IN" ]; then
