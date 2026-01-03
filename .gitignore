@@ -9,3 +9,6 @@ local/.local/state/*
 # Ignore hyprpaper.conf (ignoring it helps with a 'portable' dotfile)
 hyprland/.config/hypr/hyprpaper.conf
 hyprland/.config/hypr/monitors.conf
+
+tmux/.config/tmux/plugins/
+tmux/.config/tmux/plugins/**
