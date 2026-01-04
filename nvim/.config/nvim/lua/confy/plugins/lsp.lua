@@ -1,4 +1,4 @@
-local root_files = {
+local lua_root_files = {
   '.luarc.json',
   '.luarc.jsonc',
   '.luacheckrc',
@@ -40,7 +40,7 @@ return {
           function(server_name) -- default handler (optional)
             require('lspconfig')[server_name].setup({
               capabilities = capabilities,
-              root_dir = require('lspconfig').util.root_pattern(unpack(root_files)),
+              root_dir = require('lspconfig').util.root_pattern(unpack(lua_root_files)),
             })
           end,
 
@@ -55,12 +55,13 @@ return {
               ),
               cmd = {
                 "clangd",
-                "--background-index",      -- Index project in background
-                "--clang-tidy",            -- Real-time linting
-                "--header-insertion=iwyu", -- Auto-import headers
+                "--background-index",
+                "--clang-tidy",
+                "--header-insertion=iwyu",
                 "--completion-style=detailed",
-                "--fallback-style=llvm",   -- Ensure consistent formatting
-                "-config-file=_clangd",    -- Look for a .clangd config file
+                "--fallback-style=llvm",
+                "--query-driver=/usr/bin/cc,/usr/bin/gcc,/usr/bin/clang",
+                "-config-file=_clangd",
               },
               init_options = {
                 usePlaceholders = true,

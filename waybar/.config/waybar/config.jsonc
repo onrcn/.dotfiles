@@ -1,5 +1,7 @@
 {
   "reload_style_on_change": true,
+  "name": "waybar",
+  "style": "light",
   "layer": "top",
   "position": "top",
   "spacing": 0,
@@ -9,8 +11,8 @@
   "modules-right": [
     "group/tray-expander",
     "bluetooth",
-    "network",
     "pulseaudio",
+    "upower",
     "cpu",
     "battery"
   ],
@@ -50,18 +52,13 @@
     "tooltip": false,
     "on-click-right": "launch-floating-terminal-with-presentation cal -3"
   },
-  "network": {
-    "format-icons": ["󰤯", "󰤟", "󰤢", "󰤥", "󰤨"],
-    "format": "{icon}",
-    "format-wifi": "{icon}",
-    "format-ethernet": "󰀂",
-    "format-disconnected": "󰤮",
-    "tooltip-format-wifi": "{essid} ({frequency} GHz)\n⇣{bandwidthDownBytes}  ⇡{bandwidthUpBytes}",
-    "tooltip-format-ethernet": "⇣{bandwidthDownBytes}  ⇡{bandwidthUpBytes}",
-    "tooltip-format-disconnected": "Disconnected",
-    "interval": 3,
-    "spacing": 1,
-    "on-click": "launch-wifi"
+  "upower": {
+    "icon-size": 20,
+    "hide-if-empty": true,
+    "tooltip": true,
+    "tooltip-format": "{percentage}", // Shows the percentage in the floating box
+    "hide-if-empty": true,
+    "tooltip-spacing": 20
   },
   "battery": {
     "format": "{capacity}% {icon}",
@@ -85,7 +82,7 @@
   "bluetooth": {
     "format": "",
     "format-disabled": "󰂲",
-    "format-connected": "",
+    "format-connected": " {device_alias} {device_battery_percentage}%",
     "tooltip-format": "Devices connected: {num_connections}",
     "on-click": "blueberry"
   },

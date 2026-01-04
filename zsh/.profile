@@ -28,7 +28,7 @@ fi
 export EDITOR=nvim
 export SUDO_EDITOR=/usr/bin/nvim
 export PAGER=less
-# export MANPAGER="sh -c 'col -x | bat -l man -p'"
+export BAT_THEME="gruvbox-light"
 export TERMINAL=kitty
 export XDG_DATA_DIRS="$HOME/.local/share:$XDG_DATA_DIRS"
 . "$HOME/.cargo/env"
