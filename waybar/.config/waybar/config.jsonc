@@ -43,44 +43,43 @@
 
   "cpu": {
     "interval": 5,
-    "format": "󰍛",
+    "format": "<span size='125%'>󰍛</span>",
     "on-click": "kitty --class=TUI.float -e btop"
   },
   "clock": {
     "format": "{:L%A %H:%M}",
     "format-alt": "{:L%d %B W%V %Y}",
     "tooltip": false,
-    "on-click-right": "launch-floating-terminal-with-presentation cal -3"
   },
   "upower": {
-    "icon-size": 20,
+    "show-icon": false,
     "hide-if-empty": true,
     "tooltip": true,
-    "tooltip-format": "{percentage}", // Shows the percentage in the floating box
+    "format": "<span size='125%'>󰄙</span>",
+    "tooltip-format": "{percentage}",
     "hide-if-empty": true,
-    "tooltip-spacing": 20
+    "tooltip-spacing": 20,
   },
   "battery": {
     "format": "{capacity}% {icon}",
     "format-discharging": "{icon}",
     "format-charging": "{icon}",
-    "format-plugged": "",
+    "format-plugged": "<span size='125%'></span>",
     "format-icons": {
-      "charging": ["󰢜", "󰂆", "󰂇", "󰂈", "󰢝", "󰂉", "󰢞", "󰂊", "󰂋", "󰂅"],
-      "default": ["󰁺", "󰁻", "󰁼", "󰁽", "󰁾", "󰁿", "󰂀", "󰂁", "󰂂", "󰁹"]
+      "charging": ["<span size='125%'>󰢜</span>", "<span size='125%'>󰂆</span>", "<span size='125%'>󰂇</span>", "<span size='125%'>󰂈</span>", "<span size='125%'>󰢝</span>", "<span size='125%'>󰂉</span>", "<span size='125%'>󰢞</span>", "<span size='125%'>󰂊</span>", "<span size='125%'>󰂋</span>", "<span size='125%'>󰂅</span>"],
+      "default": ["<span size='125%'>󰁺</span>", "<span size='125%'>󰁻</span>", "<span size='125%'>󰁼</span>", "<span size='125%'>󰁽</span>", "<span size='125%'>󰁾</span>", "<span size='125%'>󰁿</span>", "<span size='125%'>󰂀</span>", "<span size='125%'>󰂁</span>", "<span size='125%'>󰂂</span>", "<span size='125%'>󰁹</span>"]
     },
-    "format-full": "󰂅",
+    "format-full": "<span size='125%'>󰂅</span>",
     "tooltip-format-discharging": "{power:>1.0f}W↓ {capacity}%",
     "tooltip-format-charging": "{power:>1.0f}W↑ {capacity}%",
     "interval": 5,
-    "on-click": "omarchy-menu power",
     "states": {
       "warning": 20,
       "critical": 10
     }
   },
   "bluetooth": {
-    "format": "",
+    "format": "<span size='125%'></span>",
     "format-disabled": "󰂲",
     "format-connected": " {device_alias} {device_battery_percentage}%",
     "tooltip-format": "Devices connected: {num_connections}",
@@ -92,9 +91,9 @@
     "on-click-right": "pamixer -t",
     "tooltip-format": "Playing at {volume}%",
     "scroll-step": 5,
-    "format-muted": "",
+    "format-muted": "<span size='200%'>󰝟</span>",
     "format-icons": {
-      "default": ["", "", ""]
+      "default": ["<span size='200%'></span>", "<span size='200%'></span>", "<span size='200%'></span>"]
     }
   },
   "group/tray-expander": {
@@ -106,7 +105,7 @@
     "modules": ["custom/expand-icon", "tray"]
   },
   "custom/expand-icon": {
-    "format": "",
+    "format": "<span size='125%'></span>",
     "tooltip": false
   },
   "tray": {
