@@ -9,6 +9,7 @@
   "modules-left": ["hyprland/workspaces"],
   "modules-center": ["clock", "custom/update", "custom/screenrecording-indicator"],
   "modules-right": [
+    "hyprland/language",
     "group/tray-expander",
     "bluetooth",
     "pulseaudio",
@@ -39,6 +40,11 @@
       "4": [],
       "5": []
     }
+  },
+
+  "hyprland/language": {
+    "format": "{short}",
+    "on-click": "switch-kb-layout"
   },
 
   "cpu": {
@@ -91,9 +97,9 @@
     "on-click-right": "pamixer -t",
     "tooltip-format": "Playing at {volume}%",
     "scroll-step": 5,
-    "format-muted": "<span size='200%'>󰝟</span>",
+    "format-muted": "<span size='150%'>󰝟</span>",
     "format-icons": {
-      "default": ["<span size='200%'></span>", "<span size='200%'></span>", "<span size='200%'></span>"]
+      "default": ["<span size='150%'></span>", "<span size='150%'></span>", "<span size='150%'></span>"]
     }
   },
   "group/tray-expander": {

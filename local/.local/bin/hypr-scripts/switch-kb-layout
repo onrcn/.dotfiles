@@ -1,0 +1,9 @@
+#!/bin/sh
+# This script is a workaround for the hardcoded keyboard device name in waybar config.
+# It finds the first keyboard device and switches its layout.
+DEVICE=$(hyprctl devices | grep -i 'keyboard' | head -1 | awk 'NR==1{print $1}')
+if [ -n "$DEVICE" ]; then
+    hyprctl switchxkblayout "$DEVICE" next
+else
+    notify-send "No keyboard device found by switch-kb-layout script."
+fi

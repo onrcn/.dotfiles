@@ -61,7 +61,8 @@ window#waybar {
   background-color: @bg2;
 }
 
-#bluetooth {
+#bluetooth,
+#language {
   margin-right: 16px;
 }
 
