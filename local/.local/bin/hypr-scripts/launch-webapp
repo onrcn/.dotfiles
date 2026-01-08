@@ -2,14 +2,27 @@
 
 browser=$(xdg-settings get default-web-browser)
 
+# Define your PWA IDs here
+WHATSAPP_ID="01KEE7A9PDBKY1Z54AD2WK3Y9R"
+GEMINI_ID="01KEE7TCSNBDFVA8ZB16SYYD7G"
+
 case $browser in
-zen-browser* | zen.desktop)
+  zen-browser* | zen.desktop)
+    # Check if the target URL is WhatsApp
+    if [[ "$1" == *"web.whatsapp.com"* ]] && [[ -n "$WHATSAPP_ID" ]]; then
+      setsid -f uwsm app -- firefoxpwa site launch "$WHATSAPP_ID" &>/dev/null &
+      exit 0
+    elif [[ "$1" == *"gemini.google.com"* ]] && [[ -n "$GEMINI_ID" ]]; then
+      setsid -f uwsm app -- firefoxpwa site launch "$GEMINI_ID" &>/dev/null &
+      exit 0
+    fi
+    # Fallback: Use standard Zen profile for other URLs
     setsid -f uwsm app -- zen-browser -P webapp --class "zen-webapp" --new-window "$1" "${@:2}" &>/dev/null &
     exit 0
     ;;
-google-chrome* | brave-browser* | microsoft-edge* | opera* | vivaldi* | helium-browser*)
+  google-chrome* | brave-browser* | microsoft-edge* | opera* | vivaldi* | helium-browser*)
     ;;
-*)
+  *)
     browser="chromium.desktop"
     ;;
 esac
