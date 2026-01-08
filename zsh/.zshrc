@@ -26,7 +26,7 @@ bindkey -e
 autoload edit-command-line; zle -N edit-command-line
 bindkey '^v' edit-command-line
 
-bindkey -s ^f "tmux-sessionizer\n"
+bindkey -s '\e[F' "tmux-sessionizer\n"
 
 alias v=nvim
 alias vim=nvim
