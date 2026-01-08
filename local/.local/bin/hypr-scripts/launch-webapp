@@ -3,8 +3,8 @@
 browser=$(xdg-settings get default-web-browser)
 
 # Define your PWA IDs here
-WHATSAPP_ID="01KEEC0NVC1XYYAH2NAJGSRAHM"
-GEMINI_ID="01KEEC05G05DE19FRRSA32TQMB"
+WHATSAPP_ID=""
+GEMINI_ID=""
 
 case $browser in
   zen-browser* | zen.desktop)
