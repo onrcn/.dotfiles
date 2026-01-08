@@ -9,6 +9,4 @@ for i = 1, 9 do
   vim.keymap.set('n', string.format('<A-%d>', i), string.format('%dgt', i), { desc = string.format('Go to tab %d', i) })
 end
 
-vim.keymap.set('n', '<A-l>', 'gt', { desc = 'Go to next tab' })
-vim.keymap.set('n', '<A-h>', 'gT', { desc = 'Go to previous tab' })
-
+vim.keymap.set("n", "<C-f>", "<cmd>silent !tmux neww tmux-sessionizer<CR>")
