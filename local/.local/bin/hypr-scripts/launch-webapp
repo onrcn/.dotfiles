@@ -2,13 +2,15 @@
 
 browser=$(xdg-settings get default-web-browser)
 
-# Define your PWA IDs here
-WHATSAPP_ID=""
-GEMINI_ID=""
+# Config file with webapp ids.
+CONFIG_FILE="${HOME}/.config/hypr-scripts/webapp-ids.conf"
+
+if [[ -f "$CONFIG_FILE" ]]; then
+    source "$CONFIG_FILE"
+fi
 
 case $browser in
   zen-browser* | zen.desktop)
-    # Check if the target URL is WhatsApp
     if [[ "$1" == *"web.whatsapp.com"* ]] && [[ -n "$WHATSAPP_ID" ]]; then
       setsid -f uwsm app -- firefoxpwa site launch "$WHATSAPP_ID" &>/dev/null &
       exit 0
