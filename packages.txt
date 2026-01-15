@@ -1,0 +1,52 @@
+# Core Components
+stow
+git
+zsh
+hyprland
+hypridle
+hyprlock
+hyprshot
+hyprsunset
+waybar
+kitty
+mako
+wofi
+neovim
+tmux
+
+# Desktop & System Utilities
+xdg-utils
+xdg-desktop-portal
+xdg-desktop-portal-hyprland
+wl-clipboard
+cliphist
+nwg-look
+network-manager-applet
+playerctl
+brightnessctl
+libnotify
+blueberry
+pamixer
+wireplumber
+pipewire
+btop
+file
+wtype
+jq
+rfkill
+go
+
+# Applications
+nautilus
+bitwarden-desktop
+firefox-pwa-bin # Or similar for Firefox PWA support
+zen-browser
+
+# Fonts
+nerd-fonts # Specifically CaskaydiaMono Nerd Font
+
+# Assumed External Dependencies (These were referenced but not found in dotfiles.
+# You might need to find their respective packages or source them separately.)
+uwsm
+awww
+impala
