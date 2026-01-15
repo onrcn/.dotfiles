@@ -33,3 +33,7 @@ export TERMINAL=kitty
 export XDG_DATA_DIRS="$HOME/.local/share:$XDG_DATA_DIRS"
 . "$HOME/.cargo/env"
 export LD_LIBRARY_PATH=/opt/cuda/lib:$LD_LIBRARY_PATH
+# Add this to ~/.bashrc or ~/.zshrc
+if [ -n "$KITTY_PID" ]; then
+    export KITTY_LISTEN_ON="unix:/tmp/mykitty-$KITTY_PID"
+fi

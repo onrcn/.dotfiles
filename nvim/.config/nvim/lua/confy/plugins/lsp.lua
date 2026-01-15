@@ -105,7 +105,7 @@ return {
       })
       vim.keymap.set('n', '<leader>f', vim.lsp.buf.format, { desc = 'LSP: Format code' })
       vim.keymap.set({ 'n', 'i' }, '<F2>', vim.lsp.buf.rename, { desc = 'LSP: Rename' })
-      vim.keymap.set({ 'n', 'v', 'i' }, '<C-.>', vim.lsp.buf.code_action,
+      vim.keymap.set({ 'n', 'v', 'i' }, '<C-/>', vim.lsp.buf.code_action,
         { silent = true, noremap = true, desc = 'LSP: Code action' })
 
       vim.keymap.set('n', 'gd', vim.lsp.buf.definition, { desc = 'LSP: Go to definition' })
