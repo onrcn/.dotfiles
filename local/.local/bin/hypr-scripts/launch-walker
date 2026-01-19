@@ -1,0 +1,15 @@
+#!/bin/bash
+
+SOCKET="/tmp/elephant.sock"
+
+COUNTER=0
+while [ ! -S "$SOCKET" ] && [ $COUNTER -lt 30 ]; do
+    sleep 0.1
+    ((COUNTER++))
+done
+
+if ! pgrep -f "walker --gapplication-service" > /dev/null; then
+    uwsm app -- walker --gapplication-service &
+fi
+
+exec walker --width 644 --maxheight 300 --minheight 300 "$@"
